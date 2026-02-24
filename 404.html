@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Not Found</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="Not found" />
+
+    <link href="theme/css/fonts.css" rel="stylesheet" />
+    <link href="theme/css/maxwell.css" rel="stylesheet" />
+    <link href="theme/css/font-awesome.css" rel="stylesheet" />
+
+    <script src="theme/js/toggle-dark.js" language="javascript"></script>
+  </head>
+
+  <body id="index" class="home">
+    <header id="banner" class="body">
+      <a href="./"><span class="site-title">Your Name</span></a>
+      <span class="site-subtitle">Personal website</span>
+      <a class="btn-toggle fa" alt="Toggle theme"></a>
+    </header>
+
+    <h1>Not Found <span class="fa fa-frown-o"></span></h1>
+    <p>The requested item could not be found.</p>
+    <p><a href="./index.html">Go back home</a></p>
+
+    <footer id="contentinfo" class="body">
+      <address id="about" class="vcard body">&copy; Your Name <span id="year"></span></address>
+    </footer>
+
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
