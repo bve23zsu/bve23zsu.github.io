@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>A note on ocean modeling with MITgcm</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="A note on ocean modeling with MITgcm" />
+
+    <link href="../theme/css/fonts.css" rel="stylesheet" />
+    <link href="../theme/css/maxwell.css?v=2026-02-01" rel="stylesheet" />
+    <link href="../theme/css/font-awesome.css" rel="stylesheet" />
+
+    <script src="../theme/js/toggle-dark.js" language="javascript"></script>
+  </head>
+
+  <body class="post">
+    <header id="banner" class="body">
+      <a href="../"><span class="site-title">Dong Jian</span></a>
+      <span class="site-subtitle"> </span>
+      <a class="btn-toggle fa" alt="Toggle theme"></a>
+    </header>
+
+    <section id="content">
+      <h1>A note on ocean modeling with MITgcm</h1>
+      <p class="post-date">April 2, 2026</p>
+
+      <p>
+        I have thought ocean modeling could be as simple as drawing a box on a map, choosing a resolution, and pressing run. That illusion did not last long. I began with a coarse 4-degree global model, then experimented with the adjoint, then played with a regional model that involved far more computation than necessary, and only later arrived at something closer to a cost-benefit balance. The path was gradual, sometimes inefficient, and often humbling.
+      </p>
+
+      <p>
+        MITgcm is not a machine that automatically simulates the ocean once supplied with a region and some data. It is better understood as a toolbox for constructing a numerical ocean world. In that world, several elements must agree with one another: the grid, the bathymetry, the forcing, the boundaries, the calendar, the diagnostics, and the restart logic. Only when these pieces are assembled coherently does the model become capable of answering a scientific question rather than merely producing output.
+      </p>
+
+      <p>
+        From the beginning, my advisor urged me to start with tutorial experiments and modify them gradually, rather than attempting to invent a complete regional setup from scratch. With time, I came to see how right that advice was. A good model does not begin as a grand design. It begins as something small, controlled, and understandable. One should first build a model that can fail in transparent ways, and only then add realism layer by layer. In this sense, progress in modeling is not achieved by complexity alone, but by clarity.
+      </p>
+
+      <p>
+        <strong>The first step is not to choose a map, but to choose a question.</strong> One should not begin by saying, "I want a model of this sea" or "this coast." One should begin by asking what one wants to understand. Is the aim to study seasonal circulation along a shelf, dense overflow across a sill, fjord exchange, or the structure of a boundary current? The question shapes everything that follows: the size of the domain, the choice of resolution, the importance of sea ice or tides, the need for open boundaries, and the diagnostics that must be saved.
+      </p>
+
+      <p>
+        <strong>There is also wisdom in beginning with a model that feels almost disappointingly simple.</strong> The first useful model should be cheap enough to run quickly, simple enough to diagnose, and robust enough to restart. It should not yet aspire to realism in every detail. It should aspire to legibility. A boring model that runs and can be understood is far more valuable than a sophisticated model whose behavior is obscure.
+      </p>
+
+      <p>
+        <strong>Geometry, too, must be chosen before one becomes lost in physical parameterizations.</strong> A fjord or estuary may be represented naturally on a Cartesian grid; a broader regional ocean may call for spherical coordinates; more specialized settings may require curvilinear treatment. This is not merely a technical choice. Geometry shapes the way the ocean is represented and therefore shapes the kinds of errors the model will make.
+      </p>
+
+      <p>
+        <strong>Bathymetry deserves the same seriousness.</strong> It is tempting to treat topography as a background field to be prepared and forgotten, but it is one of the principal controls on circulation. A misplaced sill, an overly smoothed shelf break, or an unrealistic channel depth can quietly determine the outcome of a simulation. A model may remain stable and yet still be fundamentally wrong.
+      </p>
+
+      <p>
+        <strong>The same is true of open boundaries.</strong> They are not simply files to be read by the model, but statements about what the surrounding ocean is doing beyond the limits of the domain. Every boundary value is a hypothesis. If that hypothesis is poor, the interior solution will inherit its weakness. In regional modeling, one is never modeling only the chosen box; one is also modeling, indirectly, one's assumptions about everything outside it.
+      </p>
+
+      <p>
+        <strong>Atmospheric forcing presents a similar challenge.</strong> To say that one has ERA5, or another forcing product, is not yet to say that one has a model setup. It only means that one has raw material. The model requires fluxes, stresses, and restoring terms in forms that are physically and numerically consistent. Forcing is therefore a problem of translation as much as of data availability.
+      </p>
+
+      <p>
+        <strong>Even time itself must be handled with care.</strong> In ocean modeling, dates, averaging windows, file frequencies, and restart iterations are not bookkeeping details. They are structural parts of the experiment. Many apparent physical problems are, in fact, timing problems: a mismatch of calendars, a poorly aligned forcing cycle, a misunderstanding of averaging intervals, or a restart inconsistency that quietly alters the solution.
+      </p>
+
+      <p>
+        <strong>Diagnostics, too, must be chosen deliberately.</strong> A model will not save the evidence one later wishes one had. Before a simulation is run, one should decide what success and failure would look like, and what quantities are needed to judge the difference. Diagnostics are not an optional afterthought; they are part of the scientific design.
+      </p>
+
+      <p>
+        <strong>And then there are restarts.</strong> A model run that works only when started from zero but fails when restarted is not yet a trustworthy experiment. To stop, resume, and reproduce a simulation is not simply a matter of convenience on a computer system. It is part of establishing that the experiment itself is stable and intelligible.
+      </p>
+
+      <p>
+        <strong>Perhaps the most important lesson is the oldest one: all models are wrong, but some are useful.</strong> The goal of ocean modeling is not perfection. It is to construct a model that is internally consistent, scientifically honest, and appropriate to the question being asked. In practice, that usually means resisting the temptation to make the model bigger, finer, and more elaborate before its foundations are understood.
+      </p>
+
+      <p>
+        MITgcm, in that sense, teaches patience. It teaches that a regional model is not something one simply draws on a map. It is something one builds, questions, revises, and gradually learns to trust.
+      </p>
+
+      <section id="references">
+        <h2>References</h2>
+        <ul>
+          <li><a href="https://mitgcm.readthedocs.io/en/latest/" rel="nofollow">MITgcm documentation</a></li>
+          <li><a href="http://mailman.mitgcm.org/pipermail/mitgcm-support/" rel="nofollow">MITgcm support archive</a></li>
+          <li><a href="https://github.com/MITgcm/MITgcm" rel="nofollow">MITgcm on GitHub</a></li>
+        </ul>
+      </section>
+
+      <p><a href="../">← Back to home</a></p>
+    </section>
+
+    <footer id="contentinfo" class="body">
+      <address id="about" class="vcard body">&copy; Dong Jian <span id="year"></span></address>
+    </footer>
+
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
