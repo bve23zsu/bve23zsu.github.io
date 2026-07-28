@@ -25,26 +25,356 @@
       .section-link-icon:focus {
         color: #1a73e8;
       }
+
+      .site-brand {
+        display: flex;
+        align-items: center;
+      }
+
+      .site-home-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .site-headshot {
+        width: 56px;
+        height: 56px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid rgba(0, 0, 0, 0.12);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        flex-shrink: 0;
+        cursor: zoom-in;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .site-headshot:hover,
+      .site-headshot:focus {
+        transform: scale(1.04);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+      }
+
+      .headshot-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.78);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+
+      .headshot-modal.is-open {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .headshot-modal img {
+        max-width: min(92vw, 480px);
+        max-height: min(92vh, 640px);
+        width: auto;
+        height: auto;
+        border-radius: 1rem;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+        transform: scale(0.94);
+        transition: transform 0.2s ease;
+      }
+
+      .headshot-modal.is-open img {
+        transform: scale(1);
+      }
+
+      .headshot-modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        color: #fff;
+        font-size: 1.75rem;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .section-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem 0.9rem;
+        align-items: center;
+        margin-left: auto;
+        font-size: 0.95rem;
+      }
+
+      .section-nav a {
+        color: #1a73e8;
+        text-decoration: none;
+      }
+
+      .section-nav a:hover,
+      .section-nav a:focus {
+        text-decoration: underline;
+      }
+
+      .gallery-note {
+        margin-top: 0.5rem;
+        font-size: 0.95rem;
+        color: #666;
+      }
+
+      body.dark-theme .gallery-note {
+        color: #aaa;
+      }
+
+      .gallery-viewport {
+        overflow: hidden;
+        margin-top: 1.25rem;
+        cursor: grab;
+        touch-action: pan-y;
+        -webkit-mask-image: linear-gradient(to right, transparent, #000 3%, #000 97%, transparent);
+        mask-image: linear-gradient(to right, transparent, #000 3%, #000 97%, transparent);
+      }
+
+      .gallery-viewport.is-dragging {
+        cursor: grabbing;
+      }
+
+      .gallery-strip {
+        display: flex;
+        gap: 1.25rem;
+        width: max-content;
+        padding: 0.35rem 0 0.6rem;
+        will-change: transform;
+      }
+
+      .gallery-card {
+        margin: 0;
+        width: min(320px, 76vw);
+        flex-shrink: 0;
+        border-radius: 0.9rem;
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        cursor: zoom-in;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .gallery-card:hover,
+      .gallery-card:focus-within {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+      }
+
+      body.dark-theme .gallery-card {
+        background: #1e1e1e;
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+      }
+
+      .gallery-thumb {
+        position: relative;
+        aspect-ratio: 16 / 10;
+        background: #0b1c2c;
+      }
+
+      .gallery-thumb video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .gallery-play {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      .gallery-play span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-size: 1.1rem;
+        padding-left: 0.25rem;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .gallery-card:hover .gallery-play span {
+        opacity: 0;
+        transform: scale(1.15);
+      }
+
+      .gallery-card figcaption {
+        padding: 0.75rem 0.9rem 0.85rem;
+        font-size: 0.92rem;
+        line-height: 1.4;
+        color: #333;
+      }
+
+      body.dark-theme .gallery-card figcaption {
+        color: #ddd;
+      }
+
+      .gallery-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.88);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.9rem;
+        padding: 1rem;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+
+      .gallery-modal.is-open {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .gallery-modal video {
+        max-width: min(94vw, 1080px);
+        max-height: min(80vh, 720px);
+        width: auto;
+        height: auto;
+        border-radius: 0.75rem;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+      }
+
+      .gallery-modal-caption {
+        color: #eee;
+        font-size: 0.95rem;
+        text-align: center;
+        max-width: min(90vw, 900px);
+        line-height: 1.4;
+      }
+
+      .gallery-modal-counter {
+        color: #999;
+        font-size: 0.85rem;
+      }
+
+      .gallery-modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1.25rem;
+        color: #fff;
+        font-size: 2rem;
+        line-height: 1;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 0.25rem;
+      }
+
+      .gallery-modal-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.12);
+        border: none;
+        color: #fff;
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 50%;
+        font-size: 1.4rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+
+      .gallery-modal-nav:hover,
+      .gallery-modal-nav:focus {
+        background: rgba(255, 255, 255, 0.28);
+      }
+
+      .gallery-modal-nav.prev {
+        left: 1rem;
+      }
+
+      .gallery-modal-nav.next {
+        right: 1rem;
+      }
+
+      @media (max-width: 600px) {
+        .gallery-modal-nav.prev {
+          left: 0.4rem;
+        }
+
+        .gallery-modal-nav.next {
+          right: 0.4rem;
+        }
+      }
+
+      @media (max-width: 600px) {
+        header#banner {
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .site-home-link {
+          gap: 0.6rem;
+        }
+
+        .site-headshot {
+          width: 44px;
+          height: 44px;
+        }
+
+        .site-title {
+          margin: 0;
+          font-size: 1rem;
+        }
+      }
     </style>
 
     <script src="theme/js/toggle-dark.js" language="javascript"></script>
   </head>
 
-  <body id="index" class="home">
+  <body id="top" class="home">
     <header id="banner" class="body">
-      <a href="./"><span class="site-title">Dong Jian</span></a>
-      <span class="site-subtitle"> </span>
+      <div class="site-brand">
+        <a href="./" class="site-home-link">
+          <img src="asset/headshot.JPG" alt="Portrait of Dong Jian" class="site-headshot" id="site-headshot" />
+          <span class="site-title">Dong Jian</span>
+        </a>
+      </div>
+      <div class="section-nav" aria-label="Page sections">
+        <a href="#about">About</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#posts">Posts</a>
+        <a href="#publications">Publications</a>
+        <a href="#presentations">Presentations</a>
+        <a href="#education-employment">Education</a>
+      </div>
       <a class="btn-toggle fa" alt="Toggle theme"></a>
     </header>
 
-    <nav id="menu">
-      <ul></ul>
-    </nav>
+    <div class="headshot-modal" id="headshot-modal" role="dialog" aria-modal="true" aria-label="Enlarged portrait">
+      <span class="headshot-modal-close" id="headshot-modal-close" aria-label="Close preview">&times;</span>
+      <img src="asset/headshot.JPG" alt="Enlarged portrait of Dong Jian" />
+    </div>
 
     <section id="about">
       <h2>Hi!</h2>
       <p>
-        I’m <strong>Dong</strong>, a physical oceanographer, currently a PhD student at University of East Anglia. My research focuses on understanding the ocean circulation and its interaction with climate variability. I use a combination of observational data and numerical modeling to investigate ocean-ice-atmosphere interactions. I am also interested in operational polar oceanography, novel observations, deep-sea mining, etc.
+        I’m <strong>Dong</strong>, a physical oceanographer, currently a PhD student at University of East Anglia. My research focuses on understanding the ocean circulation and its interaction with climate variability. I use a combination of observational data and numerical modeling to investigate ocean-ice-atmosphere interactions. I am also interested in operational polar oceanography, novel observations, deep-sea, etc.
       </p>
 
       <ul>
@@ -62,10 +392,10 @@
           <span class="fa fa-map-marker"></span>
         </li>
 
-        <li> The social media I tend to post on is  
+        <!-- <li> The social media I tend to post on is  
           <a href="https://www.linkedin.com/in/dong-jian/" target="_blank" rel="noreferrer">LinkedIn</a>
           <span class="fa fa-linkedin"></span>
-        </li>
+        </li> -->
 
         <li>
           Contact me via 
@@ -78,6 +408,24 @@
         </li> -->
       </ul>
     </section>
+
+    <section id="gallery">
+      <h2>Gallery</h2>
+      <p class="gallery-note">Drag the strip to browse, hover a clip for a silent preview, and click to open it full size with playback controls.</p>
+      <div class="gallery-viewport" id="gallery-viewport">
+        <div class="gallery-strip" id="gallery-strip"></div>
+      </div>
+    </section>
+
+    <div class="gallery-modal" id="gallery-modal" role="dialog" aria-modal="true" aria-label="Zoomed media view">
+      <button class="gallery-modal-close" id="gallery-modal-close" type="button" aria-label="Close viewer">&times;</button>
+      <button class="gallery-modal-nav prev" id="gallery-modal-prev" type="button" aria-label="Previous clip">&#8249;</button>
+      <video id="gallery-modal-video" controls playsinline></video>
+      <img id="gallery-modal-image" alt="" style="display: none; max-width: min(94vw, 1080px); max-height: min(80vh, 720px); border-radius: 0.75rem;" />
+      <div class="gallery-modal-caption" id="gallery-modal-caption"></div>
+      <div class="gallery-modal-counter" id="gallery-modal-counter"></div>
+      <button class="gallery-modal-nav next" id="gallery-modal-next" type="button" aria-label="Next clip">&#8250;</button>
+    </div>
 
     <section id="posts">
       <h2>Posts</h2>
@@ -116,7 +464,7 @@
 
         <li>
           <a href="https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2026GL123381" rel="nofollow">Jian, D., Zhai, X., Renfrew, I. A., & Stevens, D. P. (2026). Long-lived Anticyclonic Eddies Facilitate Convection In the Greenland Sea Over Multiple Consecutive Winters.</a> <em>Geophysical Research Letters.</em>
-          <a href="https://doi.org/10.1029/2026GL123381">DOI</a>
+          <a href="https://doi.org/10.1029/2026GL123381">https://doi.org/10.1029/2026GL123381</a>
         </li>
 
 
@@ -124,7 +472,7 @@
         <li>
           <a href="https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2025JC022960" rel="nofollow">Jian, D., Zhai, X., Stevens, D. P., & Renfrew, I. A. (2026). Oceanic Heat Transport Along the Norwegian Atlantic
           Slope Current and the Role of Eddies.</a> <em>Journal of Geophysical Research: Oceans</em>.
-          <a href="https://doi.org/10.1029/2025JC022960">DOI</a>
+          <a href="https://doi.org/10.1029/2025JC022960">https://doi.org/10.1029/2025JC022960</a>
         </li>
 
 
@@ -201,6 +549,337 @@
 
     <script>
       document.getElementById("year").textContent = new Date().getFullYear();
+
+      const headshot = document.getElementById("site-headshot");
+      const modal = document.getElementById("headshot-modal");
+      const closeButton = document.getElementById("headshot-modal-close");
+
+      if (headshot && modal && closeButton) {
+        const openModal = () => modal.classList.add("is-open");
+        const closeModal = () => modal.classList.remove("is-open");
+
+        headshot.addEventListener("click", function (event) {
+          event.preventDefault();
+          openModal();
+        });
+
+        closeButton.addEventListener("click", closeModal);
+        modal.addEventListener("click", function (event) {
+          if (event.target === modal) {
+            closeModal();
+          }
+        });
+
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "Escape") {
+            closeModal();
+          }
+        });
+      }
+
+      // Gallery items are discovered at load time: locally from the dev
+      // server's directory listing, on GitHub Pages from the repo contents
+      // API. Drop a media file into asset/gallery/ and it shows up here;
+      // the caption is the filename without its extension.
+      const galleryFallbackFiles = [
+        "How does SWOT altimeter scan the Nordic Seas .mp4",
+        "Modeled long-lived vortex in the Greeland Sea.mp4",
+        "Modeled warm eddies sheded from the Norwegian Atlantic Slope Current.mp4",
+        "Modelled surface circulation in the Nordic Seas.mp4"
+      ];
+
+      // Filename typos that shouldn't appear in captions.
+      const galleryTitleOverrides = {
+        "Modeled long-lived vortex in the Greeland Sea.mp4":
+          "Modeled long-lived vortex in the Greenland Sea"
+      };
+
+      const galleryMediaPattern = /\.(mp4|webm|mov|m4v|jpe?g|png|gif|webp)$/i;
+      const galleryVideoPattern = /\.(mp4|webm|mov|m4v)$/i;
+
+      const discoverGalleryFiles = async () => {
+        try {
+          const res = await fetch("asset/gallery/");
+          if (res.ok && (res.headers.get("content-type") || "").includes("text/html")) {
+            const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+            const files = Array.from(doc.querySelectorAll("a"))
+              .map((a) => decodeURIComponent(a.getAttribute("href") || "").split("/").pop())
+              .filter((name) => galleryMediaPattern.test(name));
+            if (files.length) {
+              return files;
+            }
+          }
+        } catch (error) {
+          /* not served locally with directory listings */
+        }
+
+        try {
+          const res = await fetch(
+            "https://api.github.com/repos/bve23zsu/bve23zsu.github.io/contents/asset/gallery"
+          );
+          if (res.ok) {
+            const files = (await res.json())
+              .map((entry) => entry.name)
+              .filter((name) => galleryMediaPattern.test(name));
+            if (files.length) {
+              return files;
+            }
+          }
+        } catch (error) {
+          /* offline or rate limited */
+        }
+
+        return galleryFallbackFiles;
+      };
+
+      const galleryViewport = document.getElementById("gallery-viewport");
+      const galleryStrip = document.getElementById("gallery-strip");
+      const galleryModal = document.getElementById("gallery-modal");
+      const galleryModalVideo = document.getElementById("gallery-modal-video");
+      const galleryModalImage = document.getElementById("gallery-modal-image");
+      const galleryModalCaption = document.getElementById("gallery-modal-caption");
+      const galleryModalCounter = document.getElementById("gallery-modal-counter");
+      const galleryModalClose = document.getElementById("gallery-modal-close");
+      const galleryModalPrev = document.getElementById("gallery-modal-prev");
+      const galleryModalNext = document.getElementById("gallery-modal-next");
+
+      if (galleryViewport && galleryStrip && galleryModal) {
+        const DRIFT_SPEED = 28; // px per second
+        let galleryItems = [];
+        let currentIndex = 0;
+        let loopWidth = 0;
+        let offset = 0;
+        let hovering = false;
+        let dragging = false;
+        let dragMoved = false;
+        let modalOpen = false;
+
+        const mediaSrc = (item) => `asset/gallery/${encodeURI(item.file)}`;
+
+        const titleFor = (file) =>
+          galleryTitleOverrides[file] || file.replace(/\.[^.]+$/, "").trim();
+
+        const openModal = (index) => {
+          currentIndex = (index + galleryItems.length) % galleryItems.length;
+          const item = galleryItems[currentIndex];
+          if (item.isVideo) {
+            galleryModalImage.style.display = "none";
+            galleryModalVideo.style.display = "";
+            galleryModalVideo.src = mediaSrc(item);
+            galleryModalVideo.load();
+            galleryModalVideo.play().catch(() => {});
+          } else {
+            galleryModalVideo.pause();
+            galleryModalVideo.style.display = "none";
+            galleryModalImage.style.display = "";
+            galleryModalImage.src = mediaSrc(item);
+            galleryModalImage.alt = item.title;
+          }
+          galleryModalCaption.textContent = item.title;
+          galleryModalCounter.textContent = `${currentIndex + 1} / ${galleryItems.length}`;
+          galleryModal.classList.add("is-open");
+          modalOpen = true;
+        };
+
+        const closeModal = () => {
+          galleryModal.classList.remove("is-open");
+          galleryModalVideo.pause();
+          modalOpen = false;
+        };
+
+        const buildCard = (item, index) => {
+          const figure = document.createElement("figure");
+          figure.className = "gallery-card";
+          figure.tabIndex = 0;
+          figure.setAttribute("role", "button");
+          figure.setAttribute("aria-label", `Open ${item.title}`);
+
+          const thumb = document.createElement("div");
+          thumb.className = "gallery-thumb";
+          if (item.isVideo) {
+            const preview = document.createElement("video");
+            preview.src = `${mediaSrc(item)}#t=0.1`;
+            preview.muted = true;
+            preview.loop = true;
+            preview.playsInline = true;
+            preview.preload = "metadata";
+            thumb.appendChild(preview);
+
+            const play = document.createElement("div");
+            play.className = "gallery-play";
+            play.innerHTML = '<span class="fa fa-play"></span>';
+            thumb.appendChild(play);
+
+            figure.addEventListener("mouseenter", () => preview.play().catch(() => {}));
+            figure.addEventListener("mouseleave", () => preview.pause());
+          } else {
+            const img = document.createElement("img");
+            img.src = mediaSrc(item);
+            img.alt = item.title;
+            img.loading = "lazy";
+            img.style.width = "100%";
+            img.style.height = "100%";
+            img.style.objectFit = "cover";
+            thumb.appendChild(img);
+          }
+          figure.appendChild(thumb);
+
+          const caption = document.createElement("figcaption");
+          caption.textContent = item.title;
+          figure.appendChild(caption);
+
+          figure.addEventListener("click", () => {
+            if (!dragMoved) {
+              openModal(index);
+            }
+          });
+          figure.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              openModal(index);
+            }
+          });
+
+          return figure;
+        };
+
+        const applyOffset = () => {
+          galleryStrip.style.transform = `translateX(${-offset}px)`;
+        };
+
+        const wrapOffset = (value) =>
+          loopWidth > 0 ? ((value % loopWidth) + loopWidth) % loopWidth : 0;
+
+        const measureLoop = () => {
+          const needsLoop = galleryStrip.dataset.duplicated === "yes";
+          loopWidth = needsLoop ? galleryStrip.scrollWidth / 2 : 0;
+        };
+
+        const buildStrip = () => {
+          galleryStrip.innerHTML = "";
+          galleryItems.forEach((item, index) => {
+            galleryStrip.appendChild(buildCard(item, index));
+          });
+
+          // Duplicate the card set once so the strip can wrap seamlessly,
+          // but only when there is enough content to overflow the viewport.
+          requestAnimationFrame(() => {
+            if (galleryStrip.scrollWidth > galleryViewport.clientWidth) {
+              galleryItems.forEach((item, index) => {
+                const dup = buildCard(item, index);
+                dup.setAttribute("aria-hidden", "true");
+                dup.tabIndex = -1;
+                galleryStrip.appendChild(dup);
+              });
+              galleryStrip.dataset.duplicated = "yes";
+            } else {
+              galleryStrip.dataset.duplicated = "no";
+            }
+            measureLoop();
+          });
+        };
+
+        const tick = (now) => {
+          if (tick.last != null && loopWidth > 0 && !hovering && !dragging && !modalOpen) {
+            offset = wrapOffset(offset + (DRIFT_SPEED * (now - tick.last)) / 1000);
+            applyOffset();
+          }
+          tick.last = now;
+          requestAnimationFrame(tick);
+        };
+
+        galleryViewport.addEventListener("mouseenter", () => {
+          hovering = true;
+        });
+        galleryViewport.addEventListener("mouseleave", () => {
+          hovering = false;
+        });
+
+        let pressed = false;
+        let dragStartX = 0;
+        let dragStartOffset = 0;
+
+        galleryViewport.addEventListener("pointerdown", (event) => {
+          if (loopWidth === 0) {
+            return;
+          }
+          pressed = true;
+          dragMoved = false;
+          dragStartX = event.clientX;
+          dragStartOffset = offset;
+        });
+
+        galleryViewport.addEventListener("pointermove", (event) => {
+          if (!pressed) {
+            return;
+          }
+          const delta = event.clientX - dragStartX;
+          // Capturing the pointer redirects the eventual click event to the
+          // viewport, which would swallow card clicks — so only capture once
+          // the gesture is clearly a drag.
+          if (!dragging && Math.abs(delta) > 6) {
+            dragging = true;
+            dragMoved = true;
+            dragStartX = event.clientX;
+            dragStartOffset = offset;
+            galleryViewport.classList.add("is-dragging");
+            galleryViewport.setPointerCapture(event.pointerId);
+          }
+          if (dragging) {
+            offset = wrapOffset(dragStartOffset - (event.clientX - dragStartX));
+            applyOffset();
+          }
+        });
+
+        const endDrag = () => {
+          pressed = false;
+          dragging = false;
+          galleryViewport.classList.remove("is-dragging");
+          // Let the click event (which fires right after pointerup) see
+          // dragMoved before it resets.
+          setTimeout(() => {
+            dragMoved = false;
+          }, 0);
+        };
+
+        galleryViewport.addEventListener("pointerup", endDrag);
+        galleryViewport.addEventListener("pointercancel", endDrag);
+
+        window.addEventListener("resize", measureLoop);
+
+        galleryModalClose.addEventListener("click", closeModal);
+        galleryModalPrev.addEventListener("click", () => openModal(currentIndex - 1));
+        galleryModalNext.addEventListener("click", () => openModal(currentIndex + 1));
+
+        galleryModal.addEventListener("click", function (event) {
+          if (event.target === galleryModal) {
+            closeModal();
+          }
+        });
+
+        document.addEventListener("keydown", function (event) {
+          if (!modalOpen) {
+            return;
+          }
+          if (event.key === "Escape") {
+            closeModal();
+          } else if (event.key === "ArrowLeft") {
+            openModal(currentIndex - 1);
+          } else if (event.key === "ArrowRight") {
+            openModal(currentIndex + 1);
+          }
+        });
+
+        discoverGalleryFiles().then((files) => {
+          galleryItems = files.map((file) => ({
+            file: file,
+            title: titleFor(file),
+            isVideo: galleryVideoPattern.test(file)
+          }));
+          buildStrip();
+          requestAnimationFrame(tick);
+        });
+      }
     </script>
   </body>
 </html>
