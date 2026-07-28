@@ -120,6 +120,53 @@
         text-decoration: underline;
       }
 
+      .news-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.85rem;
+        margin-top: 1rem;
+        padding: 1rem 1.2rem;
+        border-radius: 0.9rem;
+        background: linear-gradient(135deg, #fff7e6, #fdefd2);
+        border: 1px solid #f0d9a8;
+        line-height: 1.55;
+      }
+
+      .news-card .news-icon {
+        font-size: 1.35rem;
+        color: #c98a1b;
+        margin-top: 0.15rem;
+        flex-shrink: 0;
+      }
+
+      .news-card p {
+        margin: 0;
+      }
+
+      .news-badge {
+        display: inline-block;
+        background: #1a7f37;
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        padding: 0.18rem 0.6rem;
+        border-radius: 999px;
+        margin-left: 0.35rem;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+
+      body.dark-theme .news-card {
+        background: linear-gradient(135deg, #2b2413, #33290f);
+        border-color: #5c4a1e;
+        color: #eee;
+      }
+
+      body.dark-theme .news-card .news-icon {
+        color: #e8b44c;
+      }
+
       .gallery-note {
         margin-top: 0.5rem;
         font-size: 0.95rem;
@@ -357,6 +404,7 @@
       </div>
       <div class="section-nav" aria-label="Page sections">
         <a href="#about">About</a>
+        <a href="#news">News</a>
         <a href="#gallery">Gallery</a>
         <a href="#posts">Posts</a>
         <a href="#publications">Publications</a>
@@ -407,6 +455,19 @@
           <a href="mailto:you@example.com">you@example.com</a> <span class="fa fa-envelope"></span>
         </li> -->
       </ul>
+    </section>
+
+    <section id="news">
+      <h2>News <span class="news-badge">Open to work</span></h2>
+      <div class="news-card">
+        <span class="fa fa-bullhorn news-icon" aria-hidden="true"></span>
+        <p>
+          I expect to complete my PhD by the <strong>end of 2026</strong> and am actively looking for
+          <strong>postdoc and research positions</strong> in physical oceanography and climate science.
+          If my work resonates with what your team is doing, I would love to hear from you —
+          <a href="mailto:d.jian@uea.ac.uk">get in touch</a>!
+        </p>
+      </div>
     </section>
 
     <section id="gallery">
