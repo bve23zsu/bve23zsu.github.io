@@ -410,6 +410,7 @@
         <a href="#publications">Publications</a>
         <a href="#presentations">Presentations</a>
         <a href="#education-employment">Education</a>
+        <a href="#outofwork">Off work</a>
       </div>
       <a class="btn-toggle fa" alt="Toggle theme"></a>
     </header>
@@ -602,6 +603,14 @@
       </ul>
     </section>
 
+    <section id="outofwork">
+      <h2>When I'm out of work</h2>
+      <p class="gallery-note">Life beyond the ocean models.</p>
+      <div class="gallery-viewport" id="outofwork-viewport">
+        <div class="gallery-strip"></div>
+      </div>
+    </section>
+
       <footer id="contentinfo" class="body">
         <address id="about" class="vcard body">
           &copy; Dong Jian <span id="year"></span>
@@ -640,27 +649,13 @@
 
       // Gallery items are discovered at load time: locally from the dev
       // server's directory listing, on GitHub Pages from the repo contents
-      // API. Drop a media file into asset/gallery/ and it shows up here;
-      // the caption is the filename without its extension.
-      const galleryFallbackFiles = [
-        "How does SWOT altimeter scan the Nordic Seas .mp4",
-        "Modeled long-lived vortex in the Greeland Sea.mp4",
-        "Modeled warm eddies sheded from the Norwegian Atlantic Slope Current.mp4",
-        "Modelled surface circulation in the Nordic Seas.mp4"
-      ];
-
-      // Filename typos that shouldn't appear in captions.
-      const galleryTitleOverrides = {
-        "Modeled long-lived vortex in the Greeland Sea.mp4":
-          "Modeled long-lived vortex in the Greenland Sea"
-      };
-
+      // API. Drop a media file into the folder and it shows up on the page.
       const galleryMediaPattern = /\.(mp4|webm|mov|m4v|jpe?g|png|gif|webp)$/i;
       const galleryVideoPattern = /\.(mp4|webm|mov|m4v)$/i;
 
-      const discoverGalleryFiles = async () => {
+      const discoverGalleryFiles = async (dir, fallback) => {
         try {
-          const res = await fetch("asset/gallery/");
+          const res = await fetch(`${dir}/`);
           if (res.ok && (res.headers.get("content-type") || "").includes("text/html")) {
             const doc = new DOMParser().parseFromString(await res.text(), "text/html");
             const files = Array.from(doc.querySelectorAll("a"))
@@ -676,7 +671,7 @@
 
         try {
           const res = await fetch(
-            "https://api.github.com/repos/bve23zsu/bve23zsu.github.io/contents/asset/gallery"
+            `https://api.github.com/repos/bve23zsu/bve23zsu.github.io/contents/${dir}`
           );
           if (res.ok) {
             const files = (await res.json())
@@ -690,11 +685,9 @@
           /* offline or rate limited */
         }
 
-        return galleryFallbackFiles;
+        return fallback;
       };
 
-      const galleryViewport = document.getElementById("gallery-viewport");
-      const galleryStrip = document.getElementById("gallery-strip");
       const galleryModal = document.getElementById("gallery-modal");
       const galleryModalVideo = document.getElementById("gallery-modal-video");
       const galleryModalImage = document.getElementById("gallery-modal-image");
@@ -704,40 +697,32 @@
       const galleryModalPrev = document.getElementById("gallery-modal-prev");
       const galleryModalNext = document.getElementById("gallery-modal-next");
 
-      if (galleryViewport && galleryStrip && galleryModal) {
+      if (galleryModal && galleryModalVideo) {
         const DRIFT_SPEED = 28; // px per second
-        let galleryItems = [];
+        let activeGallery = null;
         let currentIndex = 0;
-        let loopWidth = 0;
-        let offset = 0;
-        let hovering = false;
-        let dragging = false;
-        let dragMoved = false;
         let modalOpen = false;
 
-        const mediaSrc = (item) => `asset/gallery/${encodeURI(item.file)}`;
-
-        const titleFor = (file) =>
-          galleryTitleOverrides[file] || file.replace(/\.[^.]+$/, "").trim();
-
-        const openModal = (index) => {
-          currentIndex = (index + galleryItems.length) % galleryItems.length;
-          const item = galleryItems[currentIndex];
+        const openModal = (gallery, index) => {
+          activeGallery = gallery;
+          currentIndex = (index + gallery.items.length) % gallery.items.length;
+          const item = gallery.items[currentIndex];
+          const src = `${gallery.dir}/${encodeURI(item.file)}`;
           if (item.isVideo) {
             galleryModalImage.style.display = "none";
             galleryModalVideo.style.display = "";
-            galleryModalVideo.src = mediaSrc(item);
+            galleryModalVideo.src = src;
             galleryModalVideo.load();
             galleryModalVideo.play().catch(() => {});
           } else {
             galleryModalVideo.pause();
             galleryModalVideo.style.display = "none";
             galleryModalImage.style.display = "";
-            galleryModalImage.src = mediaSrc(item);
+            galleryModalImage.src = src;
             galleryModalImage.alt = item.title;
           }
-          galleryModalCaption.textContent = item.title;
-          galleryModalCounter.textContent = `${currentIndex + 1} / ${galleryItems.length}`;
+          galleryModalCaption.textContent = gallery.showCaptions ? item.title : "";
+          galleryModalCounter.textContent = `${currentIndex + 1} / ${gallery.items.length}`;
           galleryModal.classList.add("is-open");
           modalOpen = true;
         };
@@ -748,169 +733,9 @@
           modalOpen = false;
         };
 
-        const buildCard = (item, index) => {
-          const figure = document.createElement("figure");
-          figure.className = "gallery-card";
-          figure.tabIndex = 0;
-          figure.setAttribute("role", "button");
-          figure.setAttribute("aria-label", `Open ${item.title}`);
-
-          const thumb = document.createElement("div");
-          thumb.className = "gallery-thumb";
-          if (item.isVideo) {
-            const preview = document.createElement("video");
-            preview.src = `${mediaSrc(item)}#t=0.1`;
-            preview.muted = true;
-            preview.loop = true;
-            preview.playsInline = true;
-            preview.preload = "metadata";
-            thumb.appendChild(preview);
-
-            const play = document.createElement("div");
-            play.className = "gallery-play";
-            play.innerHTML = '<span class="fa fa-play"></span>';
-            thumb.appendChild(play);
-
-            figure.addEventListener("mouseenter", () => preview.play().catch(() => {}));
-            figure.addEventListener("mouseleave", () => preview.pause());
-          } else {
-            const img = document.createElement("img");
-            img.src = mediaSrc(item);
-            img.alt = item.title;
-            img.loading = "lazy";
-            img.style.width = "100%";
-            img.style.height = "100%";
-            img.style.objectFit = "cover";
-            thumb.appendChild(img);
-          }
-          figure.appendChild(thumb);
-
-          const caption = document.createElement("figcaption");
-          caption.textContent = item.title;
-          figure.appendChild(caption);
-
-          figure.addEventListener("click", () => {
-            if (!dragMoved) {
-              openModal(index);
-            }
-          });
-          figure.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              openModal(index);
-            }
-          });
-
-          return figure;
-        };
-
-        const applyOffset = () => {
-          galleryStrip.style.transform = `translateX(${-offset}px)`;
-        };
-
-        const wrapOffset = (value) =>
-          loopWidth > 0 ? ((value % loopWidth) + loopWidth) % loopWidth : 0;
-
-        const measureLoop = () => {
-          const needsLoop = galleryStrip.dataset.duplicated === "yes";
-          loopWidth = needsLoop ? galleryStrip.scrollWidth / 2 : 0;
-        };
-
-        const buildStrip = () => {
-          galleryStrip.innerHTML = "";
-          galleryItems.forEach((item, index) => {
-            galleryStrip.appendChild(buildCard(item, index));
-          });
-
-          // Duplicate the card set once so the strip can wrap seamlessly,
-          // but only when there is enough content to overflow the viewport.
-          requestAnimationFrame(() => {
-            if (galleryStrip.scrollWidth > galleryViewport.clientWidth) {
-              galleryItems.forEach((item, index) => {
-                const dup = buildCard(item, index);
-                dup.setAttribute("aria-hidden", "true");
-                dup.tabIndex = -1;
-                galleryStrip.appendChild(dup);
-              });
-              galleryStrip.dataset.duplicated = "yes";
-            } else {
-              galleryStrip.dataset.duplicated = "no";
-            }
-            measureLoop();
-          });
-        };
-
-        const tick = (now) => {
-          if (tick.last != null && loopWidth > 0 && !hovering && !dragging && !modalOpen) {
-            offset = wrapOffset(offset + (DRIFT_SPEED * (now - tick.last)) / 1000);
-            applyOffset();
-          }
-          tick.last = now;
-          requestAnimationFrame(tick);
-        };
-
-        galleryViewport.addEventListener("mouseenter", () => {
-          hovering = true;
-        });
-        galleryViewport.addEventListener("mouseleave", () => {
-          hovering = false;
-        });
-
-        let pressed = false;
-        let dragStartX = 0;
-        let dragStartOffset = 0;
-
-        galleryViewport.addEventListener("pointerdown", (event) => {
-          if (loopWidth === 0) {
-            return;
-          }
-          pressed = true;
-          dragMoved = false;
-          dragStartX = event.clientX;
-          dragStartOffset = offset;
-        });
-
-        galleryViewport.addEventListener("pointermove", (event) => {
-          if (!pressed) {
-            return;
-          }
-          const delta = event.clientX - dragStartX;
-          // Capturing the pointer redirects the eventual click event to the
-          // viewport, which would swallow card clicks — so only capture once
-          // the gesture is clearly a drag.
-          if (!dragging && Math.abs(delta) > 6) {
-            dragging = true;
-            dragMoved = true;
-            dragStartX = event.clientX;
-            dragStartOffset = offset;
-            galleryViewport.classList.add("is-dragging");
-            galleryViewport.setPointerCapture(event.pointerId);
-          }
-          if (dragging) {
-            offset = wrapOffset(dragStartOffset - (event.clientX - dragStartX));
-            applyOffset();
-          }
-        });
-
-        const endDrag = () => {
-          pressed = false;
-          dragging = false;
-          galleryViewport.classList.remove("is-dragging");
-          // Let the click event (which fires right after pointerup) see
-          // dragMoved before it resets.
-          setTimeout(() => {
-            dragMoved = false;
-          }, 0);
-        };
-
-        galleryViewport.addEventListener("pointerup", endDrag);
-        galleryViewport.addEventListener("pointercancel", endDrag);
-
-        window.addEventListener("resize", measureLoop);
-
         galleryModalClose.addEventListener("click", closeModal);
-        galleryModalPrev.addEventListener("click", () => openModal(currentIndex - 1));
-        galleryModalNext.addEventListener("click", () => openModal(currentIndex + 1));
+        galleryModalPrev.addEventListener("click", () => openModal(activeGallery, currentIndex - 1));
+        galleryModalNext.addEventListener("click", () => openModal(activeGallery, currentIndex + 1));
 
         galleryModal.addEventListener("click", function (event) {
           if (event.target === galleryModal) {
@@ -925,20 +750,249 @@
           if (event.key === "Escape") {
             closeModal();
           } else if (event.key === "ArrowLeft") {
-            openModal(currentIndex - 1);
+            openModal(activeGallery, currentIndex - 1);
           } else if (event.key === "ArrowRight") {
-            openModal(currentIndex + 1);
+            openModal(activeGallery, currentIndex + 1);
           }
         });
 
-        discoverGalleryFiles().then((files) => {
-          galleryItems = files.map((file) => ({
-            file: file,
-            title: titleFor(file),
-            isVideo: galleryVideoPattern.test(file)
-          }));
-          buildStrip();
-          requestAnimationFrame(tick);
+        // Builds one drifting, draggable, seamlessly looping strip.
+        const initGalleryStrip = (config) => {
+          const viewport = document.getElementById(config.viewportId);
+          const strip = viewport && viewport.querySelector(".gallery-strip");
+          if (!viewport || !strip) {
+            return;
+          }
+
+          const showCaptions = config.showCaptions !== false;
+          const overrides = config.titleOverrides || {};
+          const gallery = { dir: config.dir, items: [], showCaptions: showCaptions };
+          let loopWidth = 0;
+          let offset = 0;
+          let hovering = false;
+          let dragging = false;
+          let dragMoved = false;
+
+          const mediaSrc = (item) => `${config.dir}/${encodeURI(item.file)}`;
+
+          const titleFor = (file) =>
+            overrides[file] || file.replace(/\.[^.]+$/, "").trim();
+
+          const buildCard = (item, index) => {
+            const figure = document.createElement("figure");
+            figure.className = "gallery-card";
+            figure.tabIndex = 0;
+            figure.setAttribute("role", "button");
+            figure.setAttribute("aria-label", `Open ${item.title}`);
+
+            const thumb = document.createElement("div");
+            thumb.className = "gallery-thumb";
+            if (item.isVideo) {
+              const preview = document.createElement("video");
+              preview.src = `${mediaSrc(item)}#t=0.1`;
+              preview.muted = true;
+              preview.loop = true;
+              preview.playsInline = true;
+              preview.preload = "metadata";
+              thumb.appendChild(preview);
+
+              const play = document.createElement("div");
+              play.className = "gallery-play";
+              play.innerHTML = '<span class="fa fa-play"></span>';
+              thumb.appendChild(play);
+
+              figure.addEventListener("mouseenter", () => preview.play().catch(() => {}));
+              figure.addEventListener("mouseleave", () => preview.pause());
+            } else {
+              const img = document.createElement("img");
+              img.src = mediaSrc(item);
+              img.alt = item.title;
+              img.loading = "lazy";
+              img.style.width = "100%";
+              img.style.height = "100%";
+              img.style.objectFit = "cover";
+              thumb.appendChild(img);
+            }
+            figure.appendChild(thumb);
+
+            if (showCaptions) {
+              const caption = document.createElement("figcaption");
+              caption.textContent = item.title;
+              figure.appendChild(caption);
+            }
+
+            figure.addEventListener("click", () => {
+              if (!dragMoved) {
+                openModal(gallery, index);
+              }
+            });
+            figure.addEventListener("keydown", (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openModal(gallery, index);
+              }
+            });
+
+            return figure;
+          };
+
+          const applyOffset = () => {
+            strip.style.transform = `translateX(${-offset}px)`;
+          };
+
+          const wrapOffset = (value) =>
+            loopWidth > 0 ? ((value % loopWidth) + loopWidth) % loopWidth : 0;
+
+          const measureLoop = () => {
+            const needsLoop = strip.dataset.duplicated === "yes";
+            loopWidth = needsLoop ? strip.scrollWidth / 2 : 0;
+          };
+
+          const buildStrip = () => {
+            strip.innerHTML = "";
+            gallery.items.forEach((item, index) => {
+              strip.appendChild(buildCard(item, index));
+            });
+
+            // Duplicate the card set once so the strip can wrap seamlessly,
+            // but only when there is enough content to overflow the viewport.
+            requestAnimationFrame(() => {
+              if (strip.scrollWidth > viewport.clientWidth) {
+                gallery.items.forEach((item, index) => {
+                  const dup = buildCard(item, index);
+                  dup.setAttribute("aria-hidden", "true");
+                  dup.tabIndex = -1;
+                  strip.appendChild(dup);
+                });
+                strip.dataset.duplicated = "yes";
+              } else {
+                strip.dataset.duplicated = "no";
+              }
+              measureLoop();
+            });
+          };
+
+          const tick = (now) => {
+            if (tick.last != null && loopWidth > 0 && !hovering && !dragging && !modalOpen) {
+              offset = wrapOffset(offset + (DRIFT_SPEED * (now - tick.last)) / 1000);
+              applyOffset();
+            }
+            tick.last = now;
+            requestAnimationFrame(tick);
+          };
+
+          viewport.addEventListener("mouseenter", () => {
+            hovering = true;
+          });
+          viewport.addEventListener("mouseleave", () => {
+            hovering = false;
+          });
+
+          let pressed = false;
+          let dragStartX = 0;
+          let dragStartOffset = 0;
+
+          viewport.addEventListener("pointerdown", (event) => {
+            if (loopWidth === 0) {
+              return;
+            }
+            pressed = true;
+            dragMoved = false;
+            dragStartX = event.clientX;
+            dragStartOffset = offset;
+          });
+
+          viewport.addEventListener("pointermove", (event) => {
+            if (!pressed) {
+              return;
+            }
+            const delta = event.clientX - dragStartX;
+            // Capturing the pointer redirects the eventual click event to the
+            // viewport, which would swallow card clicks — so only capture once
+            // the gesture is clearly a drag.
+            if (!dragging && Math.abs(delta) > 6) {
+              dragging = true;
+              dragMoved = true;
+              dragStartX = event.clientX;
+              dragStartOffset = offset;
+              viewport.classList.add("is-dragging");
+              viewport.setPointerCapture(event.pointerId);
+            }
+            if (dragging) {
+              offset = wrapOffset(dragStartOffset - (event.clientX - dragStartX));
+              applyOffset();
+            }
+          });
+
+          const endDrag = () => {
+            pressed = false;
+            dragging = false;
+            viewport.classList.remove("is-dragging");
+            // Let the click event (which fires right after pointerup) see
+            // dragMoved before it resets.
+            setTimeout(() => {
+              dragMoved = false;
+            }, 0);
+          };
+
+          viewport.addEventListener("pointerup", endDrag);
+          viewport.addEventListener("pointercancel", endDrag);
+
+          window.addEventListener("resize", measureLoop);
+
+          discoverGalleryFiles(config.dir, config.fallback || []).then((files) => {
+            gallery.items = files.map((file) => ({
+              file: file,
+              title: titleFor(file),
+              isVideo: galleryVideoPattern.test(file)
+            }));
+            buildStrip();
+            requestAnimationFrame(tick);
+          });
+        };
+
+        initGalleryStrip({
+          viewportId: "gallery-viewport",
+          dir: "asset/gallery",
+          fallback: [
+            "Bathymetry and model grids for the Nordic Seas model.png",
+            "How does SWOT altimeter scan the Nordic Seas .mp4",
+            "Modeled long-lived vortex in the Greeland Sea.mp4",
+            "Modeled warm eddies sheded from the Norwegian Atlantic Slope Current.mp4",
+            "Modelled Relative Vorticity in the Nordic Seas .mp4",
+            "Modelled surface circulation in the Nordic Seas.mp4"
+          ],
+          // Filename typos that shouldn't appear in captions.
+          titleOverrides: {
+            "Modeled long-lived vortex in the Greeland Sea.mp4":
+              "Modeled long-lived vortex in the Greenland Sea"
+          }
+        });
+
+        initGalleryStrip({
+          viewportId: "outofwork-viewport",
+          dir: "asset/outofwork",
+          showCaptions: false,
+          fallback: [
+            "5C247C6B-E6DF-413A-97D9-38B29335F1B4.jpg",
+            "IMG_1657.mp4",
+            "IMG_3338.jpg",
+            "IMG_3343.jpg",
+            "IMG_3399.jpg",
+            "IMG_3437.jpg",
+            "IMG_3469.jpg",
+            "IMG_3498.jpg",
+            "IMG_3627 2.jpg",
+            "IMG_3665.jpg",
+            "IMG_3679.jpg",
+            "IMG_3691.jpg",
+            "IMG_3702 2.jpg",
+            "IMG_4236.jpg",
+            "IMG_4565.jpg",
+            "IMG_4567.jpg",
+            "b3c276b04542655f3aa2ab83726448.JPG",
+            "c2535b3e1fb6cce80b55d9baf30dcf.JPG"
+          ]
         });
       }
     </script>
