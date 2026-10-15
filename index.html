@@ -264,38 +264,39 @@
         width: max-content;
         padding: 0.35rem 0 0.6rem;
         will-change: transform;
+        /* Both strips are driven from this one frame height; cards take their
+           width from the shape of what they hold, so each fits its figure
+           exactly instead of boxing every figure into the same rectangle. */
+        --thumb-h: clamp(230px, 26vw, 300px);
       }
 
       .gallery-card {
         margin: 0;
-        width: min(320px, 76vw);
+        --card-ratio: 1.6; /* until the clip has been measured */
+        width: calc(var(--thumb-h) * var(--card-ratio));
         flex-shrink: 0;
-        border-radius: 0.9rem;
-        overflow: hidden;
-        background: #fff;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
         cursor: zoom-in;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition: transform 0.2s ease;
       }
 
       .gallery-card:hover,
       .gallery-card:focus-within {
         transform: translateY(-3px);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
-      }
-
-      body.dark-theme .gallery-card {
-        background: #1e1e1e;
-        border-color: rgba(255, 255, 255, 0.12);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
       }
 
       .gallery-thumb {
         position: relative;
         overflow: hidden;
-        aspect-ratio: 16 / 10;
+        aspect-ratio: var(--card-ratio);
         background: #0b1c2c;
+        border-radius: 0.7rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+        transition: box-shadow 0.2s ease;
+      }
+
+      .gallery-card:hover .gallery-thumb,
+      .gallery-card:focus-within .gallery-thumb {
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
       }
 
       .gallery-thumb video,
@@ -310,15 +311,28 @@
          less than the 16/10 one, and the slight upward bias keeps heads in
          view rather than centring on torsos. */
       .gallery-strip--portrait .gallery-card {
-        width: min(240px, 62vw);
-      }
-
-      .gallery-strip--portrait .gallery-thumb {
-        aspect-ratio: 4 / 5;
+        --card-ratio: 0.8; /* 4:5, the shape of a phone portrait */
       }
 
       .gallery-strip--portrait .gallery-thumb img {
         object-position: center 42%;
+      }
+
+      .gallery-badge {
+        position: absolute;
+        top: 0.55rem;
+        left: 0.55rem;
+        z-index: 3;
+        background: #df2043;
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+        pointer-events: none;
       }
 
       .gallery-play {
@@ -349,15 +363,23 @@
         transform: scale(1.15);
       }
 
+      /* Sits under the frame, held to two lines so a long title can't stretch
+         the whole row. The full text stays in the tooltip and the viewer. */
       .gallery-card figcaption {
-        padding: 0.75rem 0.9rem 0.85rem;
-        font-size: 0.92rem;
-        line-height: 1.4;
-        color: #333;
+        padding: 0.5rem 0.15rem 0;
+        font-size: 0.82rem;
+        line-height: 1.35;
+        color: #555;
+        text-align: center;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
 
       body.dark-theme .gallery-card figcaption {
-        color: #ddd;
+        color: #aaa;
       }
 
       .gallery-modal {
@@ -521,9 +543,19 @@
           <span class="fa fa-film"></span>
         </li>
 
-        <li> Interactively check out 
+        <li> Interactively check out
           <a href="https://nordicseas3d.github.io/" target="_blank" rel="noreferrer"> Water Masses in the Nordic Seas</a>
           <span class="fa fa-map-marker"></span>
+        </li>
+
+        <li> Watch the
+          <!-- Opens the clip in the gallery viewer; the href is the fallback
+               if that script hasn't run. -->
+          <a
+            href="asset/gallery/Dancing%20of%20ocean%20bottom%20pressure%20in%20the%20Arctic%20Ocean.mp4"
+            data-gallery-open="Dancing of ocean bottom pressure in the Arctic Ocean.mp4"
+          >Dancing of Ocean Bottom Pressure</a>
+          <span class="fa fa-play-circle"></span>
         </li>
 
         <!-- <li> The social media I tend to post on is  
@@ -787,11 +819,132 @@
         return fallback;
       };
 
-      // Plot exports carry wide white margins, so a card filled with the whole
-      // frame is mostly blank paper. A crop is the figure's content box as
-      // fractions of the source frame; the card covers itself with that box
-      // instead. Every length below is a fixed multiple of the card's width,
-      // so nothing needs recomputing when the page resizes.
+      // ---- Trimming the paper off plot exports -----------------------------
+      // Figures are exported on a wide white page, so a card filled with the
+      // whole frame is mostly blank. Each clip is sampled once in a canvas and
+      // its non-white bounding box becomes the card's shape, so the figure
+      // fills the card exactly: no white bars, and nothing of the plot lost.
+      // Measurements are cached per file, so this is paid once per visitor.
+
+      const TRIM_WHITE = 246; // anything lighter than this counts as paper
+      const TRIM_CACHE_KEY = "gallery-trim-v2";
+      // Cards may stretch this far to match their figure before the crop has
+      // to start taking something off the edges.
+      const MIN_CARD_RATIO = 0.7;
+      const MAX_CARD_RATIO = 3.2;
+      // A content box smaller than this is a misread, not a figure.
+      const TRIM_MIN_EXTENT = 0.2;
+
+      const readTrimCache = () => {
+        try {
+          return JSON.parse(localStorage.getItem(TRIM_CACHE_KEY) || "{}");
+        } catch (error) {
+          return {};
+        }
+      };
+
+      const trimCache = readTrimCache();
+
+      const rememberTrim = (file, box) => {
+        trimCache[file] = box;
+        try {
+          localStorage.setItem(TRIM_CACHE_KEY, JSON.stringify(trimCache));
+        } catch (error) {
+          /* private browsing, or the quota is full */
+        }
+      };
+
+      // Resolves to the content box as fractions of the source frame, or null
+      // when the frame can't be read or is already edge to edge.
+      const measureContentBox = (src, isVideo) =>
+        new Promise((resolve) => {
+          const el = isVideo ? document.createElement("video") : new Image();
+          let settled = false;
+          const finish = (value) => {
+            if (!settled) {
+              settled = true;
+              resolve(value);
+            }
+          };
+          const giveUp = setTimeout(() => finish(null), 20000);
+
+          const scan = () => {
+            clearTimeout(giveUp);
+            try {
+              const sw = isVideo ? el.videoWidth : el.naturalWidth;
+              const sh = isVideo ? el.videoHeight : el.naturalHeight;
+              if (!sw || !sh) {
+                return finish(null);
+              }
+              // Margins are broad, so a reduced copy finds them just as well
+              // and scans a few hundred thousand pixels instead of millions.
+              const shrink = Math.min(1, 420 / Math.max(sw, sh));
+              const cw = Math.max(1, Math.round(sw * shrink));
+              const ch = Math.max(1, Math.round(sh * shrink));
+              const canvas = document.createElement("canvas");
+              canvas.width = cw;
+              canvas.height = ch;
+              const ctx = canvas.getContext("2d", { willReadFrequently: true });
+              ctx.drawImage(el, 0, 0, cw, ch);
+              const data = ctx.getImageData(0, 0, cw, ch).data;
+              let minX = cw;
+              let minY = ch;
+              let maxX = -1;
+              let maxY = -1;
+              for (let y = 0; y < ch; y++) {
+                for (let x = 0; x < cw; x++) {
+                  const i = (y * cw + x) * 4;
+                  if (
+                    data[i] < TRIM_WHITE ||
+                    data[i + 1] < TRIM_WHITE ||
+                    data[i + 2] < TRIM_WHITE
+                  ) {
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                  }
+                }
+              }
+              if (maxX < 0) {
+                return finish(null); // a blank frame; leave the clip alone
+              }
+              const pad = 1; // a pixel of slack for antialiased edges
+              const x0 = Math.max(0, minX - pad) / cw;
+              const y0 = Math.max(0, minY - pad) / ch;
+              const x1 = Math.min(cw, maxX + 1 + pad) / cw;
+              const y1 = Math.min(ch, maxY + 1 + pad) / ch;
+              finish({ x: x0, y: y0, w: x1 - x0, h: y1 - y0, sw: sw, sh: sh });
+            } catch (error) {
+              finish(null); // a frame from another origin can't be read back
+            }
+          };
+
+          el.onerror = () => finish(null);
+          if (isVideo) {
+            el.muted = true;
+            el.playsInline = true;
+            el.preload = "auto";
+            el.onloadeddata = () => {
+              // A little way in: the opening frame of an animation is
+              // sometimes still blank.
+              const at = Math.min(Math.max(el.duration * 0.1, 0.1), 3);
+              el.onseeked = scan;
+              try {
+                el.currentTime = at;
+              } catch (error) {
+                scan();
+              }
+            };
+          } else {
+            el.onload = scan;
+          }
+          el.src = src;
+        });
+
+      // Positions the media so its content box covers the card. When the card
+      // has been shaped to the same ratio the two coincide exactly, so this
+      // both removes the paper and keeps the whole plot in view.
       const applyCrop = (el, crop, boxRatio) => {
         if (!crop) {
           return;
@@ -809,6 +962,12 @@
         el.style.left = `${((0.5 - centreX) * 100).toFixed(3)}%`;
         el.style.top = `${((0.5 - centreY * boxRatio) * 100).toFixed(3)}%`;
       };
+
+      const cardRatioFor = (box) =>
+        Math.min(
+          MAX_CARD_RATIO,
+          Math.max(MIN_CARD_RATIO, (box.w * box.sw) / (box.h * box.sh))
+        );
 
       const galleryModal = document.getElementById("gallery-modal");
       const galleryModalVideo = document.getElementById("gallery-modal-video");
@@ -888,7 +1047,8 @@
 
           const frame = viewport.closest(".gallery-frame");
           const showCaptions = config.showCaptions !== false;
-          const crops = config.crops || {};
+          const autoTrim = config.autoTrim === true;
+          const badges = config.badges || {};
           const boxRatio = config.portrait ? 4 / 5 : 16 / 10;
           const overrides = config.titleOverrides || {};
           const gallery = { dir: config.dir, items: [], showCaptions: showCaptions };
@@ -914,12 +1074,26 @@
           const titleFor = (file) =>
             overrides[file] || file.replace(/\.[^.]+$/, "").trim();
 
+          // Gives the card the figure's own proportions and lines the media up
+          // inside it, so the plot fills the card edge to edge.
+          const dressCard = (figure, box) => {
+            const media = figure.querySelector("video, img");
+            if (!media) {
+              return;
+            }
+            const ratio = cardRatioFor(box);
+            figure.style.setProperty("--card-ratio", ratio.toFixed(4));
+            applyCrop(media, box, ratio);
+          };
+
           const buildCard = (item, index) => {
             const figure = document.createElement("figure");
             figure.className = "gallery-card";
             figure.tabIndex = 0;
             figure.setAttribute("role", "button");
             figure.setAttribute("aria-label", `Open ${item.title}`);
+
+            figure.dataset.index = index;
 
             const thumb = document.createElement("div");
             thumb.className = "gallery-thumb";
@@ -939,20 +1113,31 @@
 
               figure.addEventListener("mouseenter", () => preview.play().catch(() => {}));
               figure.addEventListener("mouseleave", () => preview.pause());
-              applyCrop(preview, crops[item.file], boxRatio);
             } else {
               const img = document.createElement("img");
               img.src = mediaSrc(item);
               img.alt = item.title;
               img.loading = "lazy";
               thumb.appendChild(img);
-              applyCrop(img, crops[item.file], boxRatio);
+            }
+            if (badges[item.file]) {
+              const badge = document.createElement("span");
+              badge.className = "gallery-badge";
+              badge.textContent = badges[item.file];
+              thumb.appendChild(badge);
             }
             figure.appendChild(thumb);
+
+            // A clip measured on an earlier visit is shaped straight away, so
+            // only the first visit ever sees the cards resettle.
+            if (autoTrim && trimCache[item.file]) {
+              dressCard(figure, trimCache[item.file]);
+            }
 
             if (showCaptions) {
               const caption = document.createElement("figcaption");
               caption.textContent = item.title;
+              caption.title = item.title; // the clamped tail, on hover
               figure.appendChild(caption);
             }
 
@@ -986,24 +1171,27 @@
             }
           };
 
-          // One arrow click advances by exactly one card (width + gap).
-          const cardStep = () => {
-            const cards = strip.children;
-            if (cards.length > 1) {
-              return cards[1].offsetLeft - cards[0].offsetLeft;
-            }
-            return cards.length ? cards[0].getBoundingClientRect().width : 0;
-          };
-
+          // Cards no longer share a width, so an arrow click lands on the next
+          // card's edge rather than moving a fixed distance.
           const stepBy = (direction) => {
-            const distance = cardStep();
-            if (loopWidth === 0 || !distance) {
+            const cards = Array.from(strip.children);
+            if (loopWidth === 0 || !cards.length) {
               return;
             }
-            // Clicking again mid-glide extends the pending target rather than
-            // restarting from a standstill.
-            animTo = (animating ? animTo : offset) + direction * distance;
+            // Clicking again mid-glide steps on from the pending target rather
+            // than restarting from a standstill.
+            const from = animating ? animTo : offset;
+            const edges = cards.map((card) => card.offsetLeft);
+            let target =
+              direction > 0
+                ? edges.find((edge) => edge > from + 1)
+                : edges.filter((edge) => edge < from - 1).pop();
+            if (target === undefined) {
+              // Off either end of the duplicated run; the wrap sorts it out.
+              target = from + direction * (strip.scrollWidth / cards.length);
+            }
             animFrom = offset;
+            animTo = target;
             animStart = performance.now();
             animating = true;
           };
@@ -1119,6 +1307,28 @@
 
           window.addEventListener("resize", measureLoop);
 
+          // Measures anything not already cached, one clip at a time so the
+          // page isn't competing with itself for bandwidth.
+          const trimUnmeasured = async () => {
+            for (let index = 0; index < gallery.items.length; index++) {
+              const item = gallery.items[index];
+              if (trimCache[item.file] !== undefined) {
+                continue;
+              }
+              const box = await measureContentBox(mediaSrc(item), item.isVideo);
+              if (!box || box.w < TRIM_MIN_EXTENT || box.h < TRIM_MIN_EXTENT) {
+                continue; // unreadable this time; try again on the next visit
+              }
+              // Applied even when there was no margin to remove: shaping the
+              // card to the figure is what keeps the whole plot in view.
+              rememberTrim(item.file, box);
+              strip
+                .querySelectorAll(`.gallery-card[data-index="${index}"]`)
+                .forEach((figure) => dressCard(figure, box));
+              measureLoop();
+            }
+          };
+
           discoverGalleryFiles(config.dir, config.fallback || []).then((files) => {
             gallery.items = files.map((file) => ({
               file: file,
@@ -1127,6 +1337,25 @@
             }));
             buildStrip();
             requestAnimationFrame(tick);
+
+            // Links elsewhere on the page that should open a clip in the
+            // viewer rather than navigating away to the bare file.
+            document.querySelectorAll("[data-gallery-open]").forEach((link) => {
+              const index = gallery.items.findIndex(
+                (candidate) => candidate.file === link.dataset.galleryOpen
+              );
+              if (index < 0) {
+                return; // not one of ours, or the file has been renamed
+              }
+              link.addEventListener("click", (event) => {
+                event.preventDefault();
+                openModal(gallery, index);
+              });
+            });
+
+            if (autoTrim) {
+              trimUnmeasured();
+            }
           });
         };
 
@@ -1134,24 +1363,18 @@
           viewportId: "gallery-viewport",
           dir: "asset/gallery",
           fallback: [
+            "Dancing of ocean bottom pressure in the Arctic Ocean.mp4",
             "How does SWOT altimeter scan the Nordic Seas .mp4",
             "Modeled long-lived vortex in the Greeland Sea.mp4",
             "Modeled warm eddies sheded from the Norwegian Atlantic Slope Current.mp4",
             "Modelled Relative Vorticity in the Nordic Seas .mp4",
             "Modelled surface circulation in the Nordic Seas.mp4"
           ],
-          // Content boxes measured off the frames themselves (fractions of the
-          // source, with a hair of padding). Re-measure if a clip is replaced;
-          // a clip with no entry here is shown whole.
-          crops: {
-            "How does SWOT altimeter scan the Nordic Seas .mp4":
-              { sw: 3000, sh: 3000, x: 0.11, y: 0.067, w: 0.763, h: 0.847 },
-            "Modeled long-lived vortex in the Greeland Sea.mp4":
-              { sw: 4000, sh: 1600, x: 0, y: 0.151, w: 1, h: 0.849 },
-            "Modelled Relative Vorticity in the Nordic Seas .mp4":
-              { sw: 1500, sh: 1200, x: 0.29, y: 0.097, w: 0.561, h: 0.814 },
-            "Modelled surface circulation in the Nordic Seas.mp4":
-              { sw: 3000, sh: 5000, x: 0, y: 0.209, w: 1, h: 0.582 }
+          // Every clip here is trimmed to its own plot automatically; nothing
+          // needs measuring by hand when one is added or replaced.
+          autoTrim: true,
+          badges: {
+            "Dancing of ocean bottom pressure in the Arctic Ocean.mp4": "New"
           },
           // Filename typos that shouldn't appear in captions.
           titleOverrides: {
