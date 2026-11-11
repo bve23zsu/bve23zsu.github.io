@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>A note on the equations governing ocean dynamics</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="From the full planetary governing equations to geostrophic balance, one approximation at a time." />
+
+    <link href="../theme/css/fonts.css" rel="stylesheet" />
+    <link href="../theme/css/maxwell.css?v=2026-02-01" rel="stylesheet" />
+    <link href="../theme/css/font-awesome.css" rel="stylesheet" />
+
+    <script src="../theme/js/toggle-dark.js" language="javascript"></script>
+
+    <script>
+      window.MathJax = {
+        tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]], tags: "none" },
+        svg: { fontCache: "global" },
+        options: { enableMenu: false }
+      };
+    </script>
+    <script src="../theme/js/mathjax/tex-svg-full.js" defer></script>
+
+    <style>
+      /* ---- Post-specific styles: equations and the closing animated figure ---- */
+      body.post {
+        --keep: #0b7a75;        /* flow */
+        --drop: #b45309;        /* pressure: highs and the pressure gradient force */
+        --low: #4a6fa5;         /* pressure lows */
+        --rock: #cdc6bb;
+        --land: #b9b4a8;
+        --rule: rgba(0, 0, 0, 0.14);
+        --soft: rgba(0, 0, 0, 0.05);
+        --water: #dcebea;
+        --muted: #6b7280;
+      }
+      body.post.dark-theme {
+        --keep: #4fd1c5;
+        --drop: #f0a84b;
+        --low: #7fa3d9;
+        --rock: #4b4741;
+        --land: #55524b;
+        --rule: rgba(255, 255, 255, 0.2);
+        --soft: rgba(255, 255, 255, 0.07);
+        --water: #263b3b;
+        --muted: #a3a9b3;
+      }
+
+      .eq { overflow-x: auto; overflow-y: hidden; padding: 0.2em 0; }
+      mjx-container[display="true"] { margin: 0.8em 0 !important; }
+      figure.table-fig img { background: #fff; border-radius: 4px; }
+
+      figure.globes { margin: 3em 0 2em; text-align: left; }
+      .globes-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 2.5em; }
+      .globes h3 { margin: 0 0 0.3em; font-size: 115%; }
+      .globes .panel p { margin: 0.4em 0 0; font-size: 92%; }
+      .globe { position: relative; width: 100%; max-width: 440px; aspect-ratio: 1 / 1; margin: 0 auto; }
+      #globe-earth { cursor: grab; touch-action: pan-y; border-radius: 8px; }
+      #globe-earth.dragging { cursor: grabbing; }
+      #globe-earth:focus-visible { outline: 2px solid var(--keep); outline-offset: 2px; }
+      .globe canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+      .globes-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6em 1.4em; margin-top: 1.2em; font-size: 90%; }
+      .globes-bar button {
+        font: inherit; color: inherit; background: transparent; cursor: pointer;
+        border: 1px solid var(--rule); border-radius: 999px; padding: 0.3em 1em; min-width: 5.5em;
+      }
+      .globes-bar button:hover { border-color: var(--keep); }
+      .globes-bar button:focus-visible { outline: 2px solid var(--keep); outline-offset: 2px; }
+      .globes-bar .sw { display: inline-block; width: 1.6em; height: 0; border-top: 3px solid currentColor; vertical-align: middle; margin-right: 0.4em; }
+      .globes-bar .sw.flow { border-top-color: var(--keep); }
+      .globes-bar .sw.pgf { border-top-color: var(--drop); }
+      .globes figcaption { margin-top: 1em; color: var(--muted); }
+      @media (max-width: 760px) { .globes-grid { grid-template-columns: minmax(0, 1fr); gap: 2em 0; } }
+    </style>
+  </head>
+
+  <body class="post">
+    <header id="banner" class="body">
+      <a href="../"><span class="site-title">Dong Jian</span></a>
+      <span class="site-subtitle"> </span>
+      <a class="btn-toggle fa" alt="Toggle theme"></a>
+    </header>
+
+    <section id="content">
+      <h1>A note on the equations governing ocean dynamics</h1>
+      <p class="post-date">November 2026</p>
+
+      <!-- <h2>Introduction</h2> -->
+
+      <p>
+        Mathematics has always been a struggle for me, and it still is. Yet studying physical oceanography means reflecting on and deriving the mathematics, and my real appreciation of it came late, only near the end of my PhD. This note was prompted by the review article <em>The Physical Oceanography of Ice-Covered Moons</em> by <a href="#ref-soderlund2024">Soderlund et al. (2024)</a>. I do not understand every term of the full governing equations; I can only follow simplified versions once enough approximations have been made. Even so, it is illuminating to see the full equations from a planetary perspective and to know exactly where each assumption enters.
+      </p>
+
+      <h2>Equations and approximations</h2>
+
+      <p>
+        Taking a planetary view, <a href="https://doi.org/10.1146/annurev-marine-040323-101355">Soderlund et al. (2024)</a> write the mass, momentum, salinity and heat equations, the equation of state, Poisson's equation, the induction equation and the no-magnetic-monopole condition under the anelastic approximation (Equation 1). Each variable is split into a background state (subscript \(0\)), assumed adiabatic, isohaline and hydrostatic, and a perturbation (denoted by a prime):
+      </p>
+
+      <div class="eq">
+        \[
+        \begin{gather}
+          \nabla\cdot(\rho_0\mathbf{u}) = 0, \tag{1a}\\
+          \begin{aligned}
+            \frac{\mathrm{D}\mathbf{u}}{\mathrm{D}t} + 2\boldsymbol{\Omega}\times\mathbf{u} = {}&amp; -\frac{1}{\rho_0}\nabla p' + \frac{\rho'}{\rho_0}\mathbf{g} - \nabla\phi' + \nu\nabla^2\mathbf{u} \\
+            &amp; + \frac{1}{\mu_0\rho_0}(\nabla\times\mathbf{B})\times\mathbf{B} - \frac{\mathrm{d}\boldsymbol{\Omega}}{\mathrm{d}t}\times\mathbf{r},
+          \end{aligned} \tag{1b}\\
+          \frac{\mathrm{D}S'}{\mathrm{D}t} = Q_1, \tag{1c}\\
+          \frac{\mathrm{D}\theta'}{\mathrm{D}t} = \frac{\theta_0}{T_0}\frac{Q_2}{c_\mathrm{p}}, \tag{1d}\\
+          \rho' = \rho_0\left(-\alpha\theta' + \beta S' + \frac{1}{\rho_0 c_\mathrm{s}^2}p'\right), \tag{1e}\\
+          \nabla^2\phi' = 4\pi\mathcal{G}\rho', \tag{1f}\\
+          \frac{\partial\mathbf{B}}{\partial t} = \nabla\times(\mathbf{u}\times\mathbf{B}) - \nabla\times\left(\frac{1}{\mu_0\sigma}\nabla\times\mathbf{B}\right), \tag{1g}\\
+          \nabla\cdot\mathbf{B} = 0. \tag{1h}
+        \end{gather}
+        \]
+      </div>
+
+      <p>
+        <strong>One does not need to understand every term, let alone solve the full set, which is practically impossible. What one should know is the list of approximations that reduce it to something tractable (Figure 1).</strong>
+      </p>
+
+      <figure class="table-fig">
+        <img src="approximations.png" alt="Table 1 of Soderlund et al. (2024), listing seventeen common approximations, when each is typically used, and the phenomena each filters out, with handwritten annotations." />
+        <figcaption>Figure 1. Commonly used approximations, adapted from Table 1 of <a href="#ref-soderlund2024">Soderlund et al. (2024)</a>.</figcaption>
+      </figure>
+
+
+      <p>
+        Step 1 reduces a planetary ocean to an Earth-like one by applying approximations (i), (ix), (x) and (xi) in Figure 1: no magnetism, a massless ocean (no self-gravitation), a rigid mantle/core (no ocean-bottom displacements) and a constant rotation rate. These remove the induction and no-monopole equations (1g, 1h) together with the Lorentz force, Poisson's equation (1f) together with \(\nabla\phi'\), and the Poincar&eacute; force \(-(\mathrm{d}\boldsymbol{\Omega}/\mathrm{d}t)\times\mathbf{r}\), leaving a constant rotation vector \(\boldsymbol{\Omega}_0\).
+      </p>
+
+      <p>
+        Step 2 applies the Boussinesq approximation (iii), in which \(\rho_0\) is constant so that mass conservation (1a) becomes \(\nabla\cdot\mathbf{u}=0\), and a linear equation of state (iv), so that \(\rho'/\rho_0=-\alpha T'+\beta S'\). Equations (1a) and (1b) become
+      </p>
+
+      <div class="eq">
+        \[
+        \begin{gather}
+          \nabla\cdot\mathbf{u} = 0, \tag{2a}\\
+          \frac{\mathrm{D}\mathbf{u}}{\mathrm{D}t} + 2\boldsymbol{\Omega}_0\times\mathbf{u} = -\frac{1}{\rho_0}\nabla p' - \alpha T'\mathbf{g} + \beta S'\mathbf{g} + \nu\nabla^2\mathbf{u}. \tag{2b}
+        \end{gather}
+        \]
+      </div>
+
+      <p>
+        Step 3 applies the thin-layer (vii) and spherical-body (viii) approximations, so that gravity is constant and purely radial:
+      </p>
+
+      <div class="eq">
+        \[
+          \mathbf{g} = -g\,\mathbf{e}_r,\qquad \frac{\rho'}{\rho_0}\mathbf{g} = -\frac{g\rho'}{\rho_0}\,\mathbf{e}_r . \tag{3}
+        \]
+      </div>
+
+      <p>
+        Step 4 is to write the momentum equation (2b) in components. Consistent with the thin-layer idea, take a local Cartesian (tangent-plane) frame at latitude \(\varphi\) on the surface of the body: \(x\) points eastward, \(y\) northward and \(r\) radially outward (upward), with unit vectors \(\mathbf{e}_x\), \(\mathbf{e}_y\), \(\mathbf{e}_r\) and velocity \(\mathbf{u}=u\,\mathbf{e}_x+v\,\mathbf{e}_y+w\,\mathbf{e}_r\). The rotation vector is parallel to the polar axis, so it has no eastward component but projects onto both the local northward and the local vertical directions:
+      </p>
+
+      <div class="eq">
+        \[
+          \boldsymbol{\Omega}_0 = \Omega_0\cos\varphi\,\mathbf{e}_y + \Omega_0\sin\varphi\,\mathbf{e}_r .
+        \]
+      </div>
+
+      <p><strong>Coriolis term.</strong> Expanding the cross product as a determinant,</p>
+
+      <div class="eq">
+        \[
+          2\boldsymbol{\Omega}_0\times\mathbf{u}
+          = 2\Omega_0
+          \begin{vmatrix}
+          \mathbf{e}_x &amp; \mathbf{e}_y &amp; \mathbf{e}_r\\
+          0 &amp; \cos\varphi &amp; \sin\varphi\\
+          u &amp; v &amp; w
+          \end{vmatrix}
+          = \left(\tilde f\,w - f\,v\right)\mathbf{e}_x + f\,u\,\mathbf{e}_y - \tilde f\,u\,\mathbf{e}_r ,
+        \]
+      </div>
+
+      <p>where</p>
+
+      <div class="eq">
+        \[
+          f = 2\Omega_0\sin\varphi, \qquad \tilde f = 2\Omega_0\cos\varphi
+        \]
+      </div>
+
+      <p>
+        are the (traditional) Coriolis parameter, from the local vertical component of the rotation vector, and the non-traditional Coriolis parameter, from its local horizontal (northward) component. <a href="#ref-soderlund2024">Soderlund et al. (2024)</a> use colatitude \(\theta_c=\pi/2-\varphi\), so their \(f=2\Omega\cos\theta_c\) is the same quantity.
+      </p>
+
+      <p>
+        <strong>Buoyancy term.</strong> With the linear equation of state from Step 2 (taking \(\theta'\approx T'\)) and gravity from (3),
+      </p>
+
+      <div class="eq">
+        \[
+          -\alpha T'\mathbf{g}+\beta S'\mathbf{g} = \frac{\rho'}{\rho_0}\,\mathbf{g} = -\frac{g\rho'}{\rho_0}\,\mathbf{e}_r ,
+        \]
+      </div>
+
+      <p>so buoyancy acts only in the radial (vertical) direction.</p>
+
+      <p>
+        <strong>Pressure gradient and friction.</strong> In this frame \(\nabla p' = \partial_x p'\,\mathbf{e}_x + \partial_y p'\,\mathbf{e}_y + \partial_r p'\,\mathbf{e}_r\) and \(\nu\nabla^2\mathbf{u} = \nu\nabla^2 u\,\mathbf{e}_x + \nu\nabla^2 v\,\mathbf{e}_y + \nu\nabla^2 w\,\mathbf{e}_r\), with \(\nabla^2=\partial_{xx}+\partial_{yy}+\partial_{rr}\).
+      </p>
+
+      <p>
+        Substituting these into (2b) and projecting onto \(\mathbf{e}_x\), \(\mathbf{e}_y\) and \(\mathbf{e}_r\) gives the three component equations
+      </p>
+
+      <div class="eq">
+        \[
+        \begin{aligned}
+          \frac{\mathrm{D}u}{\mathrm{D}t} - f v + \tilde f w &amp;= -\frac{1}{\rho_0}\frac{\partial p'}{\partial x} + \nu\nabla^2 u,\\[4pt]
+          \frac{\mathrm{D}v}{\mathrm{D}t} + f u &amp;= -\frac{1}{\rho_0}\frac{\partial p'}{\partial y} + \nu\nabla^2 v,\\[4pt]
+          \frac{\mathrm{D}w}{\mathrm{D}t} - \tilde f u &amp;= -\frac{1}{\rho_0}\frac{\partial p'}{\partial r} - \frac{g\rho'}{\rho_0} + \nu\nabla^2 w .
+        \end{aligned} \tag{4}
+        \]
+      </div>
+
+      <p>
+        Two remarks. First, (4) still keeps the full Coriolis force: the \(\tilde f\) terms couple the zonal and vertical momentum equations. Second, on a real sphere, writing \(\mathrm{D}\mathbf{u}/\mathrm{D}t\) in spherical components also produces curvature (metric) terms, such as \(-uv\tan\varphi/R\) and \(uw/R\) in the zonal equation. These are negligible when the horizontal scale \(L\) is much smaller than the radius \(R\) and \(U\ll fR\), and are omitted in this tangent-plane form.
+      </p>
+
+      <p>
+        Step 5 is the traditional approximation (xiii). With horizontal and vertical scales \(L\) and \(H\), aspect ratio \(\delta=H/L\), and continuity (2a) giving \(W\sim\delta U\), both \(\tilde f\) terms are \(O(\delta\cot\varphi)\) relative to the terms beside them. For a thin ocean away from the equator they are therefore dropped, and dropped together, since as a pair they do no work. Equation (4) becomes
+      </p>
+
+      <div class="eq">
+        \[
+        \begin{aligned}
+          \frac{\mathrm{D}u}{\mathrm{D}t} - f v &amp;= -\frac{1}{\rho_0}\frac{\partial p'}{\partial x} + \nu\nabla^2 u,\\[4pt]
+          \frac{\mathrm{D}v}{\mathrm{D}t} + f u &amp;= -\frac{1}{\rho_0}\frac{\partial p'}{\partial y} + \nu\nabla^2 v,\\[4pt]
+          \frac{\mathrm{D}w}{\mathrm{D}t} &amp;= -\frac{1}{\rho_0}\frac{\partial p'}{\partial r} - \frac{g\rho'}{\rho_0} + \nu\nabla^2 w ,
+        \end{aligned} \tag{5}
+        \]
+      </div>
+
+      <p>
+        in which only the vertical component of rotation, \(f\), remains. This can fail near the equator and in the thick oceans of icy moons, where \(\delta\) is not small.
+      </p>
+
+
+      <p>Step 6 compares the remaining terms with the Coriolis term. On an \(f\)-plane,</p>
+
+      <div class="eq">
+        \[
+          \frac{\mathrm{D}u/\mathrm{D}t}{fv}\sim\frac{U}{fL}=Ro,\qquad
+          \frac{\nu\nabla^2 u}{fv}\sim\frac{\nu}{fH^2}=E,
+        \]
+      </div>
+
+      <p>
+        the Rossby and Ekman numbers. In the vertical equation, acceleration and friction are of order \(\delta^2 Ro\) and \(\delta^2 E\) relative to the pressure gradient. For large-scale, slow flow outside frictional boundary layers (\(Ro,\,E,\,\delta\ll1\)), the pressure gradient balances the Coriolis force in the horizontal and buoyancy in the vertical, giving geostrophic and hydrostatic balance:
+      </p>
+
+      <div class="eq">
+        \[
+        \begin{aligned}
+          f v &amp;= \frac{1}{\rho_0}\frac{\partial p'}{\partial x},\\[4pt]
+          f u &amp;= -\frac{1}{\rho_0}\frac{\partial p'}{\partial y},\\[4pt]
+          \frac{\partial p'}{\partial r} &amp;= -g\rho' ,
+        \end{aligned} \tag{6}
+        \]
+      </div>
+
+      <p>or, for the geostrophic velocity,</p>
+
+      <div class="eq">
+        \[
+          \mathbf{u}_g=\frac{1}{\rho_0 f}\,\mathbf{e}_r\times\nabla_h p' .
+        \]
+      </div>
+
+      <p>Some consequences:</p>
+
+      <ul>
+        <li>The flow is along isobars, perpendicular to the pressure gradient, with high pressure to the right of the flow where \(f\gt0\) (northern hemisphere) and to the left where \(f\lt0\).</li>
+        <li>On an \(f\)-plane, \(\nabla_h\cdot\mathbf{u}_g=0\), so by (2a) \(\partial w/\partial r=0\) at this order. Vertical motion appears only at the next order in \(Ro\), through frictional (Ekman) layers, or through the variation of \(f\) with latitude (\(\beta\)-effect).</li>
+        <li>At the ocean surface \(p'=\rho_0 g\eta\), where \(\eta\) is the sea surface height, so \(\mathbf{u}_g=(g/f)\,\mathbf{e}_r\times\nabla_h\eta\): surface geostrophic currents follow contours of sea surface height, which is how they are estimated from satellite altimetry. Under an ice shell the top pressure also includes the pressure exerted by the shell, \(p'=g\rho_0\eta_s+q\) (Equation 4c of <a href="#ref-soderlund2024">Soderlund et al., 2024</a>).</li>
+        <li>
+          Differentiating the geostrophic relations with respect to \(r\) and using the hydrostatic relation gives thermal wind balance,
+          <div class="eq">
+            \[
+              f\frac{\partial v}{\partial r}=-\frac{g}{\rho_0}\frac{\partial\rho'}{\partial x},\qquad
+              f\frac{\partial u}{\partial r}=\frac{g}{\rho_0}\frac{\partial\rho'}{\partial y}, \tag{7}
+            \]
+          </div>
+          so horizontal density gradients set the vertical shear of the geostrophic flow.
+        </li>
+      </ul>
+
+      <p>
+        Geostrophy breaks down near the equator (\(f\to0\)), in frictional boundary layers (\(E\) not small) and at small scales or fast time scales (\(Ro\) not small).
+      </p>
+
+
+      <figure class="globes" id="fig-globes">
+        <div class="globes-grid">
+          <div class="panel">
+            <h3>Earth's ocean: a thin shell</h3>
+            <div class="globe" id="globe-earth" tabindex="0" role="application" aria-label="Animated globe of Earth, facing the Atlantic. Currents circle the subtropical highs and subpolar lows of each ocean basin, clockwise around a high in the northern hemisphere. One water parcel in the North Atlantic carries two arrows, the pressure gradient force pointing away from the high and the Coriolis force pointing toward it, equal and opposite. Drag, or use the arrow keys, to turn the globe.">
+              <canvas></canvas><canvas></canvas><canvas></canvas>
+            </div>
+            <p>About 4&nbsp;km of water on a sphere of radius 6400&nbsp;km, thinner than the outline drawn here. Only the vertical part of rotation, \(f\), matters, so geostrophic currents stay in the surface and circle the highs and lows of pressure in each basin: clockwise around a subtropical high in the north, anticlockwise in the south. Drag the globe to turn it, or tilt it to look down on the Arctic.</p>
+          </div>
+          <div class="panel">
+            <h3>An icy moon's ocean: a deep shell</h3>
+            <div class="globe" id="globe-moon" role="img" aria-label="Animated cut-through of an icy moon: an ice shell, a deep ocean and a rocky interior. Water in the ocean swirls in columns that run parallel to the rotation axis. Three parcels stacked along one column circle together, and the middle one carries the pressure gradient and Coriolis force arrows, equal and opposite.">
+              <canvas></canvas><canvas></canvas><canvas></canvas>
+            </div>
+            <p>Tens to hundreds of kilometres of water under ice, a sizeable fraction of the radius, so the whole rotation vector matters. In a rapidly rotating, weakly stratified ocean the same balance of pressure gradient and Coriolis force makes water move in columns parallel to the rotation axis: parcels stacked along a column circle together (the Taylor&ndash;Proudman theorem).</p>
+          </div>
+        </div>
+        <div class="globes-bar">
+          <button type="button" id="globes-toggle" aria-pressed="false">Pause</button>
+          <span><span class="sw flow"></span>flow</span>
+          <span><span class="sw pgf"></span>pressure gradient force</span>
+          <span><span class="sw"></span>Coriolis force</span>
+        </div>
+        <figcaption>Figure 2. Geostrophic balance in a thin and in a deep ocean, seen in the rotating frame. Both panels are schematics built from idealised pressure fields, not simulations or observations. Earth's coastlines are real (Natural Earth), but its pressure field is a set of smooth highs and lows placed roughly where the subtropical and subpolar gyres, the Arctic's Beaufort Gyre and transpolar drift, and the Antarctic Circumpolar Current sit; no flow is drawn near the equator, where \(f\to0\) and the balance fails. The moon's ocean is drawn deeper than to scale. Whether a given moon's ocean is in this columnar regime depends on how strongly rotation constrains its convection, which is uncertain.</figcaption>
+      </figure>
+
+
+      <section id="acknowledgement">
+        <h2>Acknowledgement</h2>
+        <ul>
+          <p> Clau assisted in mathematical derivation and created animations. 
+        </ul>
+      </section>
+
+      <section id="references">
+        <h2>References</h2>
+        <ul>
+          <li id="ref-soderlund2024">
+            Soderlund, K. M., Rovira-Navarro, M., Le Bars, M., Schmidt, B. E., and Gerkema, T. (2024). The physical oceanography of ice-covered moons. <em>Annual Review of Marine Science</em>, 16:25&ndash;53. <a href="https://doi.org/10.1146/annurev-marine-040323-101355" rel="nofollow">doi:10.1146/annurev-marine-040323-101355</a>
+          </li>
+        </ul>
+      </section>
+
+
+      <p><a href="../">← Back to home</a></p>
+    </section>
+
+    <footer id="contentinfo" class="body">
+      <address id="about" class="vcard body">&copy; Dong Jian <span id="year"></span></address>
+    </footer>
+
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+
+      /* ---------- Figure 2: geostrophic flow on Earth and in an icy moon ---------- */
+      (function () {
+        var fig = document.getElementById("fig-globes");
+        if (!fig) return;
+        var S = 440, DPR = Math.min(window.devicePixelRatio || 1, 2);
+        var col = {};
+
+        function readColors() {
+          var cs = getComputedStyle(document.body);
+          ["keep", "drop", "low", "rock", "land", "water", "soft"].forEach(function (k) { col[k] = cs.getPropertyValue("--" + k).trim(); });
+          col.ink = cs.color;
+        }
+        function rgb(c) {
+          var x = document.createElement("canvas").getContext("2d");
+          x.fillStyle = c; x.fillRect(0, 0, 1, 1);
+          return x.getImageData(0, 0, 1, 1).data;
+        }
+        function layers(id) {
+          return Array.prototype.map.call(document.querySelectorAll("#" + id + " canvas"), function (c) {
+            c.width = S * DPR; c.height = S * DPR;
+            var x = c.getContext("2d"); x.setTransform(DPR, 0, 0, DPR, 0, 0);
+            return x;
+          });
+        }
+        // orthographic view from `tilt` above the equator, centred on longitude `lon`; world z is the rotation axis
+        var RAD = Math.PI / 180;
+        function view(tiltDeg, cx, cy, R, lonDeg) {
+          var V = { cx: cx, cy: cy, R: R, lon: (lonDeg || 0) * RAD };
+          V.setTilt = function (t) { V.tilt = t; V.ca = Math.cos(t); V.sa = Math.sin(t); };
+          V.setTilt(tiltDeg * RAD);
+          V.p = function (v) {
+            var cl = Math.cos(V.lon), sl = Math.sin(V.lon), x = v[0] * cl + v[1] * sl, y = -v[0] * sl + v[1] * cl;
+            return { X: cx + R * y, Y: cy - R * (v[2] * V.ca - x * V.sa), D: x * V.ca + v[2] * V.sa };
+          };
+          return V;
+        }
+        function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+        function norm(a) { var l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
+        function ll(lonDeg, latDeg) {
+          var lo = lonDeg * Math.PI / 180, la = latDeg * Math.PI / 180;
+          return [Math.cos(la) * Math.cos(lo), Math.cos(la) * Math.sin(lo), Math.sin(la)];
+        }
+        function arrow(x, a, b, color, w) {
+          var dx = b.X - a.X, dy = b.Y - a.Y, L = Math.hypot(dx, dy);
+          if (L < 2) return;
+          var ux = dx / L, uy = dy / L, h = Math.min(9, L * 0.55), bx = b.X - ux * h, by = b.Y - uy * h;
+          x.strokeStyle = color; x.fillStyle = color; x.lineWidth = w; x.lineCap = "round";
+          x.beginPath(); x.moveTo(a.X, a.Y); x.lineTo(bx, by); x.stroke();
+          x.beginPath(); x.moveTo(b.X, b.Y); x.lineTo(bx - uy * h * 0.5, by + ux * h * 0.5); x.lineTo(bx + uy * h * 0.5, by - ux * h * 0.5); x.closePath(); x.fill();
+        }
+        function axis(x, V, top, label) {
+          var lonKeep = V.lon; V.lon = 0;                 // the axis marker does not turn with the globe
+          var b = V.p([0, 0, top]);
+          x.strokeStyle = col.ink; x.lineWidth = 1.2; x.globalAlpha = 0.7;
+          x.beginPath();
+          [1, -1].forEach(function (sg) {     // the pole facing the viewer starts at the surface, the other clears the limb first
+            var from = sg * V.sa > 0 ? 1 : 1 / V.ca + 0.01, to = sg > 0 ? top : top - 0.06;
+            if (from >= to) return;
+            var p = V.p([0, 0, sg * from]), q = V.p([0, 0, sg * to]);
+            x.moveTo(p.X, p.Y); x.lineTo(q.X, q.Y);
+          });
+          x.stroke();
+          // sense of rotation
+          x.beginPath();
+          for (var t = 50; t <= 330; t += 10) {
+            var q = V.p([0.13 * Math.cos(t * Math.PI / 180), 0.13 * Math.sin(t * Math.PI / 180), top - 0.07]);
+            if (t === 50) x.moveTo(q.X, q.Y); else x.lineTo(q.X, q.Y);
+          }
+          x.stroke();
+          var e0 = V.p([0.13 * Math.cos(330 * Math.PI / 180), 0.13 * Math.sin(330 * Math.PI / 180), top - 0.07]);
+          var e1 = V.p([0.13 * Math.cos(358 * Math.PI / 180), 0.13 * Math.sin(358 * Math.PI / 180), top - 0.07]);
+          arrow(x, e0, e1, col.ink, 1.2);
+          x.globalAlpha = 1; x.fillStyle = col.ink; x.font = "italic 15px serif"; x.textAlign = "left";
+          x.fillText(label, b.X + 22, b.Y + 8);
+          V.lon = lonKeep;
+        }
+
+        /* ================= Earth ================= */
+        var E = (function () {
+          var box = document.getElementById("globe-earth"), L = layers("globe-earth");
+          var V = view(18, 220, 232, 172, -40);            // start facing the Atlantic
+          var LW = 720, LH = 360, land = null;             // land fraction, 0.5 degree, from Natural Earth
+          var GW = 360, GH = 180, PG = new Float32Array(GW * GH), marks = [], ready = false;
+
+          function sample(a, w, h, lon, lat) {             // bilinear lookup on a lon-lat grid of cell centres
+            var fx = (lon / (2 * Math.PI) + 0.5) * w - 0.5, fy = (0.5 - lat / Math.PI) * h - 0.5;
+            if (fy < 0) fy = 0; else if (fy > h - 1) fy = h - 1;
+            var x0 = Math.floor(fx), y0 = Math.floor(fy), tx = fx - x0, ty = fy - y0, y1 = y0 < h - 1 ? y0 + 1 : y0;
+            var xa = ((x0 % w) + w) % w, xb = (xa + 1) % w;
+            return (a[y0 * w + xa] * (1 - tx) + a[y0 * w + xb] * tx) * (1 - ty) + (a[y1 * w + xa] * (1 - tx) + a[y1 * w + xb] * tx) * ty;
+          }
+          function landAt(lon, lat) { return sample(land, LW, LH, lon, lat) / 255; }
+          function presAt(lon, lat) { return sample(PG, GW, GH, lon, lat); }
+
+          // Idealised pressure: highs on the subtropical gyres (steeper on their western side), lows on the
+          // subpolar gyres, a drop across the Antarctic Circumpolar Current. [lon, lat, amplitude, west, east, north-south widths]
+          var gyres = [
+            [-64, 30, 1.0, 13, 42, 10], [-38, -31, 0.9, 11, 36, 9],
+            [146, 29, 1.1, 14, 75, 10], [-176, -31, 1.0, 20, 75, 9], [54, -31, 0.95, 14, 52, 9],
+            [-40, 58, -0.75, 16, 16, 6], [-178, 51, -0.75, 26, 30, 6],
+            // Arctic, as round cells [lon, lat, amplitude, radius]: Beaufort Gyre high, a cyclonic low on the
+            // Eurasian side (the transpolar drift runs between the two), and the cyclonic Nordic Seas
+            [-150, 76, 0.75, 9], [75, 84, -0.5, 8], [-2, 72, -0.6, 7]
+          ];
+          var centres = gyres.map(function (g) { return ll(g[0], g[1]); });
+          function ideal(lonD, latD) {
+            var s = -0.95 * 0.5 * (1 + Math.tanh((-latD - 53) / 5)), x = ll(lonD, latD);
+            for (var i = 0; i < gyres.length; i++) {
+              var g = gyres[i];
+              if (g.length === 4) {
+                var c = centres[i], d = Math.acos(Math.max(-1, Math.min(1, x[0] * c[0] + x[1] * c[1] + x[2] * c[2]))) / RAD / g[3];
+                s += g[2] * Math.exp(-d * d);
+              } else {
+                var dl = ((lonD - g[0] + 540) % 360) - 180, a = dl * Math.cos(g[1] * RAD) / (dl < 0 ? g[3] : g[4]), b = (latD - g[1]) / g[5];
+                s += g[2] * Math.exp(-a * a - b * b);
+              }
+            }
+            return s;
+          }
+          function build() {
+            var o = new Float32Array(GW * GH), t = new Float32Array(GW * GH), i, j, k, pass;
+            for (j = 0; j < GH; j++) for (i = 0; i < GW; i++) o[j * GW + i] = 1 - landAt((i + 0.5 - 180) * RAD, (89.5 - j) * RAD);
+            for (pass = 0; pass < 3; pass++) {             // blur the ocean mask so pressure falls to zero at the coast,
+              for (j = 0; j < GH; j++) for (i = 0; i < GW; i++) { var a = 0; for (k = -2; k <= 2; k++) a += o[j * GW + ((i + k + GW) % GW)]; t[j * GW + i] = a / 5; }
+              for (j = 0; j < GH; j++) for (i = 0; i < GW; i++) { var c = 0; for (k = -2; k <= 2; k++) c += t[Math.min(GH - 1, Math.max(0, j + k)) * GW + i]; o[j * GW + i] = c / 5; }
+            }                                              // which makes the coast an isobar: the flow runs along it
+            for (j = 0; j < GH; j++) for (i = 0; i < GW; i++) {
+              var m = Math.min(1, Math.max(0, (o[j * GW + i] - 0.55) / 0.4)); m = m * m * (3 - 2 * m);
+              PG[j * GW + i] = m * ideal(i + 0.5 - 180, 89.5 - j);
+            }
+            marks = gyres.map(function (g) {               // put each H or L on the extreme of the finished field
+              var best = 0, at = null, round = g.length === 4, nj = round ? 4 : 12, ni = round ? Math.round(4 / Math.cos(g[1] * RAD)) : 40;
+              for (var dj = -nj; dj <= nj; dj++) for (var di = -ni; di <= ni; di++) {
+                var jj = Math.round(89.5 - g[1]) + dj, ii = (Math.round(g[0] + 179.5) + di + GW) % GW;
+                if (jj < 0 || jj >= GH) continue;
+                var v = PG[jj * GW + ii] * (g[2] > 0 ? 1 : -1);
+                if (v > best) { best = v; at = ll(ii + 0.5 - 180, 89.5 - jj); }
+              }
+              return { c: at, hi: g[2] > 0 };
+            }).filter(function (m) { return m.c; });
+          }
+          function lonlat(x) { return [Math.atan2(x[1], x[0]), Math.asin(Math.max(-1, Math.min(1, x[2])))]; }
+          function presVec(x) { var q = lonlat(x); return presAt(q[0], q[1]); }
+          function grad(x) {                               // surface gradient from differences along two tangent directions,
+            var e1 = norm(cross(Math.abs(x[2]) > 0.9 ? [1, 0, 0] : [0, 0, 1], x)), e2 = cross(x, e1), h = 0.6 * RAD;
+            function at(e, sg) { return presVec(norm([x[0] + sg * h * e[0], x[1] + sg * h * e[1], x[2] + sg * h * e[2]])); }
+            var d1 = (at(e1, 1) - at(e1, -1)) / (2 * h), d2 = (at(e2, 1) - at(e2, -1)) / (2 * h);
+            return [d1 * e1[0] + d2 * e2[0], d1 * e1[1] + d2 * e2[1], d1 * e1[2] + d2 * e2[2]];   // so the poles need no special case
+          }
+          // u_g = e_r x grad(p) / f, with 1/f regularised so the flow fades out at the equator
+          function vel(x) {
+            var s = x[2] / (x[2] * x[2] + 0.07), c = cross(x, grad(x));
+            return [c[0] * s, c[1] * s, c[2] * s];
+          }
+          var N = 1000, P = [];
+          function spawn(q) {
+            for (var tries = 0; tries < 12; tries++) {
+              var z = 2 * Math.random() - 1, a = 2 * Math.PI * Math.random(), r = Math.sqrt(1 - z * z);
+              q.x = [r * Math.cos(a), r * Math.sin(a), z];
+              if (landAt(a > Math.PI ? a - 2 * Math.PI : a, Math.asin(z)) > 0.4) continue;
+              var v = vel(q.x);
+              if (Math.hypot(v[0], v[1], v[2]) > 0.5 || tries > 8) break;
+            }
+            q.life = 100 + Math.random() * 240; q.prev = null;
+          }
+          var parcel = ll(-45, 38), p0 = 0;                // rides one isobar of the North Atlantic subtropical gyre
+
+          function drawStatic(quick) {
+            if (!ready) return;
+            var x = L[0], R = V.R, n = quick ? 250 : Math.min(560, Math.round(2 * R * DPR)), off = document.createElement("canvas");
+            x.clearRect(0, 0, S, S);
+            off.width = off.height = n;
+            var ox = off.getContext("2d"), img = ox.createImageData(n, n), d = img.data;
+            var hi = rgb(col.drop), lo = rgb(col.low), wa = rgb(col.water), la = rgb(col.land);
+            var cl = Math.cos(V.lon), sl = Math.sin(V.lon);
+            for (var j = 0; j < n; j++) for (var i = 0; i < n; i++) {
+              var a = (i + 0.5) / n * 2 - 1, b = 1 - (j + 0.5) / n * 2, d2 = 1 - a * a - b * b, k = 4 * (j * n + i);
+              if (d2 < 0) continue;
+              var D = Math.sqrt(d2), xv = D * V.ca - b * V.sa, z = D * V.sa + b * V.ca;
+              var lon = Math.atan2(xv * sl + a * cl, xv * cl - a * sl), lat = Math.asin(Math.max(-1, Math.min(1, z)));
+              var pr = presAt(lon, lat), t = Math.min(0.62, Math.abs(pr) * 0.62), c = pr > 0 ? hi : lo;
+              var f = Math.min(1, Math.max(0, (landAt(lon, lat) - 0.3) / 0.4)), sh = 0.9 + 0.1 * D;
+              d[k] = ((wa[0] + (c[0] - wa[0]) * t) * (1 - f) + la[0] * f) * sh;
+              d[k + 1] = ((wa[1] + (c[1] - wa[1]) * t) * (1 - f) + la[1] * f) * sh;
+              d[k + 2] = ((wa[2] + (c[2] - wa[2]) * t) * (1 - f) + la[2] * f) * sh;
+              d[k + 3] = 255;
+            }
+            ox.putImageData(img, 0, 0);
+            x.save(); x.beginPath(); x.arc(V.cx, V.cy, R, 0, 2 * Math.PI); x.clip();
+            x.imageSmoothingEnabled = true; x.drawImage(off, V.cx - R, V.cy - R, 2 * R, 2 * R);
+            x.strokeStyle = col.ink; x.lineWidth = 0.7;
+            function path(fn, from, to, alpha, dash) {
+              x.globalAlpha = alpha; x.setLineDash(dash || []); x.beginPath();
+              var pen = false;
+              for (var t = from; t <= to; t += 3) { var q = V.p(fn(t)); if (q.D > 0) { if (pen) x.lineTo(q.X, q.Y); else x.moveTo(q.X, q.Y); pen = true; } else pen = false; }
+              x.stroke();
+            }
+            [-60, -30, 30, 60].forEach(function (la2) { path(function (t) { return ll(t, la2); }, -180, 180, 0.13); });
+            for (var lo2 = -180; lo2 < 180; lo2 += 30) (function (m) { path(function (t) { return ll(m, t); }, -90, 90, 0.13); })(lo2);
+            path(function (t) { return ll(t, 0); }, -180, 180, 0.55, [5, 4]);
+            x.setLineDash([]); x.restore();
+            x.globalAlpha = 1; x.strokeStyle = col.ink; x.lineWidth = 1.5;
+            x.beginPath(); x.arc(V.cx, V.cy, R, 0, 2 * Math.PI); x.stroke();
+            x.textAlign = "center"; x.textBaseline = "middle";
+            x.font = "italic 12px 'Open Sans', sans-serif"; x.fillStyle = col.ink;
+            [["Atlantic", -30, 7], ["Pacific", -150, 7], ["Indian", 75, -8], ["Arctic", 150, 79]].forEach(function (o) {
+              var q = V.p(ll(o[1], o[2]));
+              if (q.D > 0.45) { x.globalAlpha = 0.7; x.fillText(o[0], q.X, q.Y); }
+            });
+            x.globalAlpha = 1; x.font = "600 15px 'Open Sans', sans-serif";
+            marks.forEach(function (m) {
+              var q = V.p(m.c);
+              if (q.D < 0.25) return;
+              x.fillStyle = m.hi ? col.drop : col.low; x.fillText(m.hi ? "H" : "L", q.X, q.Y);
+            });
+            x.textBaseline = "alphabetic";
+            axis(x, V, 1.3, "Ω");
+          }
+          function step() {
+            if (!ready) return;
+            for (var i = 0; i < N; i++) {
+              var q = P[i], v = vel(q.x), sp = Math.hypot(v[0], v[1], v[2]), k = 0.0011;
+              if (sp * k > 0.012) k = 0.012 / sp;
+              q.x = norm([q.x[0] + v[0] * k, q.x[1] + v[1] * k, q.x[2] + v[2] * k]);
+              q.sp = sp;
+              var w = lonlat(q.x);
+              if (--q.life < 0 || landAt(w[0], w[1]) > 0.5) spawn(q);
+            }
+            // parcel: constant speed along its isobar, nudged back onto it to stop drift
+            var g = grad(parcel), d = norm(cross(parcel, g)), sg = parcel[2] > 0 ? 0.006 : -0.006;
+            parcel = norm([parcel[0] + d[0] * sg, parcel[1] + d[1] * sg, parcel[2] + d[2] * sg]);
+            g = grad(parcel);
+            var e = (p0 - presVec(parcel)) / ((g[0] * g[0] + g[1] * g[1] + g[2] * g[2]) || 1);
+            parcel = norm([parcel[0] + g[0] * e, parcel[1] + g[1] * e, parcel[2] + g[2] * e]);
+          }
+          function drawParcel() {
+            var o = L[2]; o.clearRect(0, 0, S, S);
+            var a = V.p(parcel);
+            if (!ready || a.D < 0.12) return;
+            var g = norm(grad(parcel)), sg = parcel[2] > 0 ? 1 : -1, d = norm(cross(parcel, g));
+            function tip(dir, len) { return V.p([parcel[0] + dir[0] * len, parcel[1] + dir[1] * len, parcel[2] + dir[2] * len]); }
+            arrow(o, a, tip([d[0] * sg, d[1] * sg, d[2] * sg], 0.2), col.keep, 3);
+            arrow(o, a, tip([-g[0], -g[1], -g[2]], 0.26), col.drop, 3);
+            arrow(o, a, tip(g, 0.26), col.ink, 3);
+            o.fillStyle = col.ink; o.beginPath(); o.arc(a.X, a.Y, 4.5, 0, 2 * Math.PI); o.fill();
+          }
+          function draw() {
+            if (!ready) return;
+            var x = L[1];
+            x.globalCompositeOperation = "destination-out"; x.fillStyle = "rgba(0,0,0,0.07)"; x.fillRect(0, 0, S, S);
+            x.globalCompositeOperation = "source-over"; x.strokeStyle = col.keep; x.lineWidth = 1.4; x.lineCap = "round";
+            for (var i = 0; i < N; i++) {
+              var q = P[i], s = V.p(q.x);
+              if (s.D > 0.02 && q.prev) {
+                x.globalAlpha = Math.min(1, q.sp / 2.5) * Math.min(1, s.D * 4);
+                x.beginPath(); x.moveTo(q.prev.X, q.prev.Y); x.lineTo(s.X, s.Y); x.stroke();
+              }
+              q.prev = s.D > 0.02 ? s : null;
+            }
+            x.globalAlpha = 1;
+            drawParcel();
+          }
+          // turning the globe: drag, or arrow keys when it has focus
+          var settle = null;
+          function turned() {
+            L[1].clearRect(0, 0, S, S);
+            for (var i = 0; i < N; i++) P[i].prev = null;
+            drawStatic(true); drawParcel();
+            clearTimeout(settle); settle = setTimeout(function () { drawStatic(false); }, 180);
+          }
+          function turn(dlon, dtilt) {
+            V.lon -= dlon;
+            V.setTilt(Math.max(-1.1, Math.min(1.1, V.tilt + dtilt)));
+            turned();
+          }
+          var last = null;
+          box.addEventListener("pointerdown", function (ev) { last = ev; box.setPointerCapture(ev.pointerId); box.classList.add("dragging"); });
+          box.addEventListener("pointermove", function (ev) {
+            if (!last) return;
+            var k = box.clientWidth / S * V.R;            // on-screen radius in CSS pixels
+            turn((ev.clientX - last.clientX) / k, ev.pointerType === "touch" ? 0 : (ev.clientY - last.clientY) / k);
+            last = ev;
+          });
+          ["pointerup", "pointercancel"].forEach(function (t) { box.addEventListener(t, function () { last = null; box.classList.remove("dragging"); }); });
+          box.addEventListener("keydown", function (ev) {
+            var m = { ArrowLeft: [-0.17, 0], ArrowRight: [0.17, 0], ArrowUp: [0, 0.09], ArrowDown: [0, -0.09] }[ev.key];
+            if (m) { ev.preventDefault(); turn(m[0], m[1]); }
+          });
+
+          function init(done) {
+            var im = new Image();
+            im.onload = function () {
+              var c = document.createElement("canvas"); c.width = LW; c.height = LH;
+              var cx2 = c.getContext("2d"); cx2.drawImage(im, 0, 0);
+              var px = cx2.getImageData(0, 0, LW, LH).data;
+              land = new Uint8Array(LW * LH);
+              for (var i = 0; i < LW * LH; i++) land[i] = px[4 * i];
+              build();
+              p0 = presVec(parcel);
+              for (var k = 0; k < N; k++) { var q = {}; spawn(q); q.life *= Math.random(); P.push(q); }
+              ready = true; done();
+            };
+            im.src = "data:image/png;base64,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";
+          }
+          return { init: init, drawStatic: drawStatic, step: step, draw: draw };
+        })();
+
+        /* ================= Icy moon ================= */
+        var M = (function () {
+          var L = layers("globe-moon"), V = view(30, 220, 232, 160);
+          var RI = 0.7, RICE = 1.075, SC = 0.85, W = 0.1, MM = 6;
+          // z-independent streamfunction (proportional to pressure): columns of alternating sign around the axis
+          function psi(x, y) {
+            var s = Math.hypot(x, y), th = Math.atan2(y, x), u = (s - SC) / W;
+            return Math.exp(-u * u) * Math.sin(MM * th);
+          }
+          function gradPsi(x, y) {
+            var s = Math.hypot(x, y) || 1e-6, th = Math.atan2(y, x), u = (s - SC) / W, G = Math.exp(-u * u);
+            var ps = -2 * u / W * G * Math.sin(MM * th), pt = G * MM * Math.cos(MM * th) / s, c = x / s, sn = y / s;
+            return [ps * c - pt * sn, ps * sn + pt * c];
+          }
+          var N = 1100, P = [];
+          function gauss() { return (Math.random() + Math.random() + Math.random() - 1.5) * 1.15; }
+          function spawn(q) {
+            var s, th = 2 * Math.PI * Math.random();
+            do { s = SC + W * 1.1 * gauss(); } while (s < RI + 0.01 || s > 0.985);
+            var h = Math.sqrt(1 - s * s) * 0.96;
+            q.x = [s * Math.cos(th), s * Math.sin(th), (2 * Math.random() - 1) * h]; q.life = 120 + Math.random() * 260; q.prev = null;
+          }
+          for (var i = 0; i < N; i++) { var q = {}; spawn(q); q.life *= Math.random(); P.push(q); }
+          function hidden(s) { return s.D < 0 && Math.hypot(s.X - V.cx, s.Y - V.cy) < RI * V.R; }
+
+          // stacked parcels on a high-pressure column on the near side
+          var thc = -Math.PI / 4, par = [(SC + 0.07) * Math.cos(thc), (SC + 0.07) * Math.sin(thc)], psi0 = psi(par[0], par[1]);
+
+          function drawStatic() {
+            var x = L[0], R = V.R;
+            x.clearRect(0, 0, S, S);
+            x.fillStyle = col.soft; x.strokeStyle = col.ink; x.lineWidth = 1.5;
+            x.beginPath(); x.arc(V.cx, V.cy, R * RICE, 0, 2 * Math.PI); x.fill(); x.stroke();
+            x.fillStyle = col.water; x.lineWidth = 0.8;
+            x.beginPath(); x.arc(V.cx, V.cy, R, 0, 2 * Math.PI); x.fill(); x.stroke();
+            x.fillStyle = col.rock; x.lineWidth = 1;
+            x.beginPath(); x.arc(V.cx, V.cy, R * RI, 0, 2 * Math.PI); x.fill(); x.stroke();
+            // equators of the ocean top and of the rocky interior
+            [[1, 0.3], [RI, 0.35]].forEach(function (r) {
+              x.globalAlpha = r[1]; x.setLineDash([5, 4]); x.beginPath();
+              var pen = false;
+              for (var t = -180; t <= 180; t += 3) {
+                var w = ll(t, 0), q = V.p([w[0] * r[0], w[1] * r[0], 0]);
+                if (q.D > 0) { if (pen) x.lineTo(q.X, q.Y); else x.moveTo(q.X, q.Y); pen = true; } else pen = false;
+              }
+              x.stroke();
+            });
+            x.setLineDash([]); x.globalAlpha = 1;
+            x.fillStyle = col.ink; x.font = "13px 'Open Sans', sans-serif"; x.textAlign = "center";
+            x.globalAlpha = 0.75; x.fillText("rocky interior", V.cx, V.cy - R * 0.36);
+            x.textAlign = "left"; x.fillText("ice shell", 14, 62);
+            x.globalAlpha = 0.5; x.lineWidth = 1; x.beginPath(); x.moveTo(62, 68); x.lineTo(V.cx - R * 1.04 * 0.72, V.cy - R * 1.04 * 0.69); x.stroke();
+            x.globalAlpha = 1;
+            axis(x, V, 1.36, "Ω");
+          }
+          function step() {
+            for (var i = 0; i < N; i++) {
+              var q = P[i], g = gradPsi(q.x[0], q.x[1]), k = 0.00085;
+              q.x[0] += -g[1] * k; q.x[1] += g[0] * k;           // u = z-hat x grad(psi): no dependence on z
+              q.sp = Math.hypot(g[0], g[1]);
+              var s2 = q.x[0] * q.x[0] + q.x[1] * q.x[1];
+              if (--q.life < 0 || s2 < RI * RI || s2 + q.x[2] * q.x[2] > 0.985) spawn(q);
+            }
+            var g2 = gradPsi(par[0], par[1]), n = Math.hypot(g2[0], g2[1]) || 1;
+            par[0] += -g2[1] / n * 0.0042; par[1] += g2[0] / n * 0.0042;
+            g2 = gradPsi(par[0], par[1]);
+            var e = (psi0 - psi(par[0], par[1])) / ((g2[0] * g2[0] + g2[1] * g2[1]) || 1);
+            par[0] += g2[0] * e; par[1] += g2[1] * e;
+          }
+          function draw() {
+            var x = L[1];
+            x.globalCompositeOperation = "destination-out"; x.fillStyle = "rgba(0,0,0,0.07)"; x.fillRect(0, 0, S, S);
+            x.globalCompositeOperation = "source-over"; x.strokeStyle = col.keep; x.lineWidth = 1.4; x.lineCap = "round";
+            for (var i = 0; i < N; i++) {
+              var q = P[i], s = V.p(q.x), ok = !hidden(s);
+              if (ok && q.prev) {
+                x.globalAlpha = Math.min(1, q.sp / 5) * (s.D > 0 ? 0.95 : 0.22);
+                x.beginPath(); x.moveTo(q.prev.X, q.prev.Y); x.lineTo(s.X, s.Y); x.stroke();
+              }
+              q.prev = ok ? s : null;
+            }
+            x.globalAlpha = 1;
+            var o = L[2]; o.clearRect(0, 0, S, S);
+            var g = gradPsi(par[0], par[1]), n = Math.hypot(g[0], g[1]) || 1, gx = g[0] / n, gy = g[1] / n;
+            var h = Math.sqrt(1 - par[0] * par[0] - par[1] * par[1]) * 0.97;
+            var top = V.p([par[0], par[1], h]), bot = V.p([par[0], par[1], -h]);
+            o.strokeStyle = col.ink; o.lineWidth = 1.3; o.globalAlpha = 0.75; o.setLineDash([4, 3]);
+            o.beginPath(); o.moveTo(top.X, top.Y); o.lineTo(bot.X, bot.Y); o.stroke(); o.setLineDash([]); o.globalAlpha = 1;
+            [0.3, -0.3, 0].forEach(function (z) {
+              var a = V.p([par[0], par[1], z]);
+              arrow(o, a, V.p([par[0] - gy * 0.17, par[1] + gx * 0.17, z]), col.keep, 3);
+              if (z === 0) {
+                arrow(o, a, V.p([par[0] - gx * 0.2, par[1] - gy * 0.2, z]), col.drop, 3);
+                arrow(o, a, V.p([par[0] + gx * 0.2, par[1] + gy * 0.2, z]), col.ink, 3);
+              }
+              o.fillStyle = col.ink; o.beginPath(); o.arc(a.X, a.Y, z === 0 ? 4.5 : 3.5, 0, 2 * Math.PI); o.fill();
+            });
+          }
+          return { drawStatic: drawStatic, step: step, draw: draw };
+        })();
+
+        /* ================= run ================= */
+        var btn = document.getElementById("globes-toggle");
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var playing = !reduce, onScreen = true, raf = null;
+        function frame() {
+          raf = null;
+          if (!playing || !onScreen) return;
+          E.step(); E.draw(); M.step(); M.draw();
+          raf = requestAnimationFrame(frame);
+        }
+        function kick() { if (playing && onScreen && raf === null) raf = requestAnimationFrame(frame); }
+        function label() { btn.textContent = playing ? "Pause" : "Play"; btn.setAttribute("aria-pressed", playing ? "false" : "true"); }
+        function restyle() { readColors(); E.drawStatic(); M.drawStatic(); if (!playing) { E.draw(); M.draw(); } }
+
+        readColors(); M.drawStatic();
+        for (var i = 0; i < 90; i++) { M.step(); M.draw(); }       // start with trails already drawn
+        E.init(function () {
+          E.drawStatic();
+          for (var i = 0; i < 90; i++) { E.step(); E.draw(); }
+          kick();
+        });
+        label(); kick();
+        btn.addEventListener("click", function () { playing = !playing; label(); kick(); });
+        if (window.IntersectionObserver) new IntersectionObserver(function (en) { onScreen = en[0].isIntersecting; kick(); }).observe(fig);
+        new MutationObserver(restyle).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { E.drawStatic(); M.drawStatic(); });
+      })();
+    </script>
+  </body>
+</html>
