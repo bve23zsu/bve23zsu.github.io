@@ -28,7 +28,8 @@
         --keep: #0b7a75;        /* flow */
         --drop: #b45309;        /* pressure: highs and the pressure gradient force */
         --low: #4a6fa5;         /* pressure lows */
-        --rock: #cdc6bb;
+        --rock: #c3b8a8;
+        --mantleHi: #e6dccb;
         --land: #b9b4a8;
         --rule: rgba(0, 0, 0, 0.14);
         --soft: rgba(0, 0, 0, 0.05);
@@ -40,6 +41,7 @@
         --drop: #f0a84b;
         --low: #7fa3d9;
         --rock: #4b4741;
+        --mantleHi: #6a6258;
         --land: #55524b;
         --rule: rgba(255, 255, 255, 0.2);
         --soft: rgba(255, 255, 255, 0.07);
@@ -56,11 +58,11 @@
       .globes h3 { margin: 0 0 0.3em; font-size: 115%; }
       .globes .panel p { margin: 0.4em 0 0; font-size: 92%; }
       .globe { position: relative; width: 100%; max-width: 440px; aspect-ratio: 1 / 1; margin: 0 auto; }
-      #globe-earth { cursor: grab; touch-action: pan-y; border-radius: 8px; }
-      #globe-earth.dragging { cursor: grabbing; }
-      #globe-earth:focus-visible { outline: 2px solid var(--keep); outline-offset: 2px; }
+      .globe { cursor: grab; touch-action: pan-y; border-radius: 8px; }
+      .globe.dragging { cursor: grabbing; }
+      .globe:focus-visible { outline: 2px solid var(--keep); outline-offset: 2px; }
       .globe canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
-      .globes-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6em 1.4em; margin-top: 1.2em; font-size: 90%; }
+      .globes-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6em 1.4em; margin-top: 1.2em; font-size: 90%; }
       .globes-bar button {
         font: inherit; color: inherit; background: transparent; cursor: pointer;
         border: 1px solid var(--rule); border-radius: 999px; padding: 0.3em 1em; min-width: 5.5em;
@@ -71,6 +73,7 @@
       .globes-bar .sw.flow { border-top-color: var(--keep); }
       .globes-bar .sw.pgf { border-top-color: var(--drop); }
       .globes figcaption { margin-top: 1em; color: var(--muted); }
+      .post-note { margin-top: 3em; padding-top: 1em; border-top: 1px solid var(--rule); font-size: 88%; color: var(--muted); }
       @media (max-width: 760px) { .globes-grid { grid-template-columns: minmax(0, 1fr); gap: 2em 0; } }
     </style>
   </head>
@@ -86,7 +89,6 @@
       <h1>A note on the equations governing ocean dynamics</h1>
       <p class="post-date">November 2026</p>
 
-      <!-- <h2>Introduction</h2> -->
 
       <p>
         Mathematics has always been a struggle for me, and it still is. Yet studying physical oceanography means reflecting on and deriving the mathematics, and my real appreciation of it came late, only near the end of my PhD. This note was prompted by the review article <em>The Physical Oceanography of Ice-Covered Moons</em> by <a href="#ref-soderlund2024">Soderlund et al. (2024)</a>. I do not understand every term of the full governing equations; I can only follow simplified versions once enough approximations have been made. Even so, it is illuminating to see the full equations from a planetary perspective and to know exactly where each assumption enters.
@@ -95,7 +97,7 @@
       <h2>Equations and approximations</h2>
 
       <p>
-        Taking a planetary view, <a href="https://doi.org/10.1146/annurev-marine-040323-101355">Soderlund et al. (2024)</a> write the mass, momentum, salinity and heat equations, the equation of state, Poisson's equation, the induction equation and the no-magnetic-monopole condition under the anelastic approximation (Equation 1). Each variable is split into a background state (subscript \(0\)), assumed adiabatic, isohaline and hydrostatic, and a perturbation (denoted by a prime):
+        Taking a planetary view, <a href="#ref-soderlund2024">Soderlund et al. (2024)</a> write the mass, momentum, salinity and heat equations, the equation of state, Poisson's equation, the induction equation and the no-magnetic-monopole condition under the anelastic approximation (Equation 1). Each variable is split into a background state (subscript \(0\)), assumed adiabatic, isohaline and hydrostatic, and a perturbation (denoted by a prime):
       </p>
 
       <div class="eq">
@@ -125,6 +127,9 @@
         <figcaption>Figure 1. Commonly used approximations, adapted from Table 1 of <a href="#ref-soderlund2024">Soderlund et al. (2024)</a>.</figcaption>
       </figure>
 
+      <p>
+        <strong>Now, I show how these approximations simplify the governing equations.</strong>
+      </p>
 
       <p>
         Step 1 reduces a planetary ocean to an Earth-like one by applying approximations (i), (ix), (x) and (xi) in Figure 1: no magnetism, a massless ocean (no self-gravitation), a rigid mantle/core (no ocean-bottom displacements) and a constant rotation rate. These remove the induction and no-monopole equations (1g, 1h) together with the Lorentz force, Poisson's equation (1f) together with \(\nabla\phi'\), and the Poincar&eacute; force \(-(\mathrm{d}\boldsymbol{\Omega}/\mathrm{d}t)\times\mathbf{r}\), leaving a constant rotation vector \(\boldsymbol{\Omega}_0\).
@@ -308,28 +313,21 @@
           </div>
           <div class="panel">
             <h3>An icy moon's ocean: a deep shell</h3>
-            <div class="globe" id="globe-moon" role="img" aria-label="Animated cut-through of an icy moon: an ice shell, a deep ocean and a rocky interior. Water in the ocean swirls in columns that run parallel to the rotation axis. Three parcels stacked along one column circle together, and the middle one carries the pressure gradient and Coriolis force arrows, equal and opposite.">
+            <div class="globe" id="globe-moon" tabindex="0" role="application" aria-label="Animated cut-through of an icy moon: an ice shell, a deep ocean and a mantle that may be rigid rock or soft. Water in the ocean swirls in columns that run parallel to the rotation axis. Three parcels stacked along one column circle together, and the middle one carries the pressure gradient and Coriolis force arrows, equal and opposite. Drag, or use the arrow keys, to turn it.">
               <canvas></canvas><canvas></canvas><canvas></canvas>
             </div>
-            <p>Tens to hundreds of kilometres of water under ice, a sizeable fraction of the radius, so the whole rotation vector matters. In a rapidly rotating, weakly stratified ocean the same balance of pressure gradient and Coriolis force makes water move in columns parallel to the rotation axis: parcels stacked along a column circle together (the Taylor&ndash;Proudman theorem).</p>
+            <p>Tens to hundreds of kilometres of water under ice, a sizeable fraction of the radius, so the whole rotation vector matters. In a rapidly rotating, weakly stratified ocean the same balance of pressure gradient and Coriolis force makes water move in columns parallel to the rotation axis: parcels stacked along a column circle together (the Taylor&ndash;Proudman theorem). The mantle beneath may be rigid rock or soft enough to flex with the tide; Step 1 takes it as rigid. This one turns as well: drag sideways to spin it, or up and down to look along the axis.</p>
           </div>
         </div>
         <div class="globes-bar">
           <button type="button" id="globes-toggle" aria-pressed="false">Pause</button>
+          <span>Drag either globe to turn it.</span>
           <span><span class="sw flow"></span>flow</span>
           <span><span class="sw pgf"></span>pressure gradient force</span>
           <span><span class="sw"></span>Coriolis force</span>
         </div>
         <figcaption>Figure 2. Geostrophic balance in a thin and in a deep ocean, seen in the rotating frame. Both panels are schematics built from idealised pressure fields, not simulations or observations. Earth's coastlines are real (Natural Earth), but its pressure field is a set of smooth highs and lows placed roughly where the subtropical and subpolar gyres, the Arctic's Beaufort Gyre and transpolar drift, and the Antarctic Circumpolar Current sit; no flow is drawn near the equator, where \(f\to0\) and the balance fails. The moon's ocean is drawn deeper than to scale. Whether a given moon's ocean is in this columnar regime depends on how strongly rotation constrains its convection, which is uncertain.</figcaption>
       </figure>
-
-
-      <section id="acknowledgement">
-        <h2>Acknowledgement</h2>
-        <ul>
-          <p> Clau assisted in mathematical derivation and created animations. 
-        </ul>
-      </section>
 
       <section id="references">
         <h2>References</h2>
@@ -340,6 +338,7 @@
         </ul>
       </section>
 
+      <p class="post-note">Acknowledgement: I thank Clau for polishing my original draft and making the visualizations.</p>
 
       <p><a href="../">← Back to home</a></p>
     </section>
@@ -360,7 +359,7 @@
 
         function readColors() {
           var cs = getComputedStyle(document.body);
-          ["keep", "drop", "low", "rock", "land", "water", "soft"].forEach(function (k) { col[k] = cs.getPropertyValue("--" + k).trim(); });
+          ["keep", "drop", "low", "rock", "mantleHi", "land", "water", "soft"].forEach(function (k) { col[k] = cs.getPropertyValue("--" + k).trim(); });
           col.ink = cs.color;
         }
         function rgb(c) {
@@ -426,6 +425,28 @@
           x.globalAlpha = 1; x.fillStyle = col.ink; x.font = "italic 15px serif"; x.textAlign = "left";
           x.fillText(label, b.X + 22, b.Y + 8);
           V.lon = lonKeep;
+        }
+
+        // turning a globe: drag with a pointer, or the arrow keys when it has focus
+        function draggable(box, V, turned) {
+          function turn(dlon, dtilt) {
+            V.lon -= dlon;
+            V.setTilt(Math.max(-1.1, Math.min(1.1, V.tilt + dtilt)));
+            turned();
+          }
+          var last = null;
+          box.addEventListener("pointerdown", function (ev) { last = ev; box.setPointerCapture(ev.pointerId); box.classList.add("dragging"); });
+          box.addEventListener("pointermove", function (ev) {
+            if (!last) return;
+            var k = box.clientWidth / S * V.R;            // on-screen radius in CSS pixels
+            turn((ev.clientX - last.clientX) / k, ev.pointerType === "touch" ? 0 : (ev.clientY - last.clientY) / k);
+            last = ev;
+          });
+          ["pointerup", "pointercancel"].forEach(function (t) { box.addEventListener(t, function () { last = null; box.classList.remove("dragging"); }); });
+          box.addEventListener("keydown", function (ev) {
+            var m = { ArrowLeft: [-0.17, 0], ArrowRight: [0.17, 0], ArrowUp: [0, 0.09], ArrowDown: [0, -0.09] }[ev.key];
+            if (m) { ev.preventDefault(); turn(m[0], m[1]); }
+          });
         }
 
         /* ================= Earth ================= */
@@ -613,31 +634,12 @@
             x.globalAlpha = 1;
             drawParcel();
           }
-          // turning the globe: drag, or arrow keys when it has focus
           var settle = null;
-          function turned() {
+          draggable(box, V, function () {
             L[1].clearRect(0, 0, S, S);
             for (var i = 0; i < N; i++) P[i].prev = null;
-            drawStatic(true); drawParcel();
+            drawStatic(true); drawParcel();                // a cheap redraw while turning, the full one once it stops
             clearTimeout(settle); settle = setTimeout(function () { drawStatic(false); }, 180);
-          }
-          function turn(dlon, dtilt) {
-            V.lon -= dlon;
-            V.setTilt(Math.max(-1.1, Math.min(1.1, V.tilt + dtilt)));
-            turned();
-          }
-          var last = null;
-          box.addEventListener("pointerdown", function (ev) { last = ev; box.setPointerCapture(ev.pointerId); box.classList.add("dragging"); });
-          box.addEventListener("pointermove", function (ev) {
-            if (!last) return;
-            var k = box.clientWidth / S * V.R;            // on-screen radius in CSS pixels
-            turn((ev.clientX - last.clientX) / k, ev.pointerType === "touch" ? 0 : (ev.clientY - last.clientY) / k);
-            last = ev;
-          });
-          ["pointerup", "pointercancel"].forEach(function (t) { box.addEventListener(t, function () { last = null; box.classList.remove("dragging"); }); });
-          box.addEventListener("keydown", function (ev) {
-            var m = { ArrowLeft: [-0.17, 0], ArrowRight: [0.17, 0], ArrowUp: [0, 0.09], ArrowDown: [0, -0.09] }[ev.key];
-            if (m) { ev.preventDefault(); turn(m[0], m[1]); }
           });
 
           function init(done) {
@@ -660,7 +662,7 @@
 
         /* ================= Icy moon ================= */
         var M = (function () {
-          var L = layers("globe-moon"), V = view(30, 220, 232, 160);
+          var box = document.getElementById("globe-moon"), L = layers("globe-moon"), V = view(30, 220, 232, 160);
           var RI = 0.7, RICE = 1.075, SC = 0.85, W = 0.1, MM = 6;
           // z-independent streamfunction (proportional to pressure): columns of alternating sign around the axis
           function psi(x, y) {
@@ -684,30 +686,50 @@
           function hidden(s) { return s.D < 0 && Math.hypot(s.X - V.cx, s.Y - V.cy) < RI * V.R; }
 
           // stacked parcels on a high-pressure column on the near side
-          var thc = -Math.PI / 4, par = [(SC + 0.07) * Math.cos(thc), (SC + 0.07) * Math.sin(thc)], psi0 = psi(par[0], par[1]);
+          var thc = Math.PI / 12, par = [(SC + 0.07) * Math.cos(thc), (SC + 0.07) * Math.sin(thc)], psi0 = psi(par[0], par[1]);
 
+          function mantle(w) { return RI; }               // drawn as a sphere: it may be rigid rock or soft
           function drawStatic() {
-            var x = L[0], R = V.R;
+            var x = L[0], R = V.R, t, pen;
             x.clearRect(0, 0, S, S);
             x.fillStyle = col.soft; x.strokeStyle = col.ink; x.lineWidth = 1.5;
             x.beginPath(); x.arc(V.cx, V.cy, R * RICE, 0, 2 * Math.PI); x.fill(); x.stroke();
             x.fillStyle = col.water; x.lineWidth = 0.8;
             x.beginPath(); x.arc(V.cx, V.cy, R, 0, 2 * Math.PI); x.fill(); x.stroke();
-            x.fillStyle = col.rock; x.lineWidth = 1;
-            x.beginPath(); x.arc(V.cx, V.cy, R * RI, 0, 2 * Math.PI); x.fill(); x.stroke();
-            // equators of the ocean top and of the rocky interior
-            [[1, 0.3], [RI, 0.35]].forEach(function (r) {
-              x.globalAlpha = r[1]; x.setLineDash([5, 4]); x.beginPath();
-              var pen = false;
-              for (var t = -180; t <= 180; t += 3) {
-                var w = ll(t, 0), q = V.p([w[0] * r[0], w[1] * r[0], 0]);
+            // mantle outline as seen from here
+            var cl = Math.cos(V.lon), sl = Math.sin(V.lon);
+            x.beginPath();
+            for (t = 0; t <= 360; t += 4) {
+              var a = Math.cos(t * RAD), b = Math.sin(t * RAD), xv = -b * V.sa;
+              var r = mantle([xv * cl - a * sl, xv * sl + a * cl, b * V.ca]) * R;
+              if (t === 0) x.moveTo(V.cx + r * a, V.cy - r * b); else x.lineTo(V.cx + r * a, V.cy - r * b);
+            }
+            x.closePath();
+            var gr = x.createRadialGradient(V.cx - R * 0.15, V.cy - R * 0.2, R * 0.05, V.cx, V.cy, R * RI * 1.1);
+            gr.addColorStop(0, col.mantleHi); gr.addColorStop(1, col.rock);
+            x.save(); x.shadowColor = col.rock; x.shadowBlur = 10; x.fillStyle = gr; x.fill(); x.restore();
+            // lines of longitude and latitude, on the mantle and (fainter) on the ice, so turning shows
+            function line(fn, from, to, alpha, dash) {
+              x.globalAlpha = alpha; x.setLineDash(dash || []); x.beginPath(); pen = false;
+              for (var u = from; u <= to; u += 3) {
+                var q = V.p(fn(u));
                 if (q.D > 0) { if (pen) x.lineTo(q.X, q.Y); else x.moveTo(q.X, q.Y); pen = true; } else pen = false;
               }
               x.stroke();
-            });
+            }
+            function onMantle(lo, la) { var w = ll(lo, la), m = mantle(w); return [w[0] * m, w[1] * m, w[2] * m]; }
+            function onIce(lo, la) { var w = ll(lo, la); return [w[0] * RICE, w[1] * RICE, w[2] * RICE]; }
+            x.strokeStyle = col.ink; x.lineWidth = 0.8;
+            for (var lo = -180; lo < 180; lo += 30) (function (m) {
+              line(function (u) { return onMantle(m, u); }, -90, 90, m === 0 ? 0.55 : 0.22);
+              line(function (u) { return onIce(m, u); }, -90, 90, m === 0 ? 0.3 : 0.1);
+            })(lo);
+            [-60, -30, 30, 60].forEach(function (la) { line(function (u) { return onMantle(u, la); }, -180, 180, 0.22); });
+            line(function (u) { return onMantle(u, 0); }, -180, 180, 0.4, [5, 4]);
+            line(function (u) { var w = ll(u, 0); return w; }, -180, 180, 0.3, [5, 4]);
             x.setLineDash([]); x.globalAlpha = 1;
             x.fillStyle = col.ink; x.font = "13px 'Open Sans', sans-serif"; x.textAlign = "center";
-            x.globalAlpha = 0.75; x.fillText("rocky interior", V.cx, V.cy - R * 0.36);
+            x.globalAlpha = 0.8; x.fillText("mantle", V.cx, V.cy - R * 0.36);
             x.textAlign = "left"; x.fillText("ice shell", 14, 62);
             x.globalAlpha = 0.5; x.lineWidth = 1; x.beginPath(); x.moveTo(62, 68); x.lineTo(V.cx - R * 1.04 * 0.72, V.cy - R * 1.04 * 0.69); x.stroke();
             x.globalAlpha = 1;
@@ -740,6 +762,9 @@
               q.prev = ok ? s : null;
             }
             x.globalAlpha = 1;
+            drawParcel();
+          }
+          function drawParcel() {
             var o = L[2]; o.clearRect(0, 0, S, S);
             var g = gradPsi(par[0], par[1]), n = Math.hypot(g[0], g[1]) || 1, gx = g[0] / n, gy = g[1] / n;
             var h = Math.sqrt(1 - par[0] * par[0] - par[1] * par[1]) * 0.97;
@@ -756,6 +781,11 @@
               o.fillStyle = col.ink; o.beginPath(); o.arc(a.X, a.Y, z === 0 ? 4.5 : 3.5, 0, 2 * Math.PI); o.fill();
             });
           }
+          draggable(box, V, function () {
+            L[1].clearRect(0, 0, S, S);
+            for (var i = 0; i < N; i++) P[i].prev = null;
+            drawStatic(); drawParcel();
+          });
           return { drawStatic: drawStatic, step: step, draw: draw };
         })();
 
